@@ -1,3 +1,3 @@
-const Main = require('./src/logic/main');
+import Main from './src/logic/main.js';
 
-new Main();
+new Main('echo "Hello"');
