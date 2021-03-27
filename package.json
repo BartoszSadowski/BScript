@@ -1,0 +1,11 @@
+{
+  "name": "bscript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "generate": "antlr4 -Dlanguage=JavaScript -o src/grammar/antlrResult src/grammar/BScript.g4"
+  },
+  "author": "Bartosz Sadowski",
+  "license": "ISC"
+}
