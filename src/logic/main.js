@@ -1,12 +1,13 @@
 import {
     InputStream,
-    CommonTokenStream
+    CommonTokenStream,
+    tree
 } from 'antlr4';
 
 import BScriptLexer from '../grammar/antlrResult/BScriptLexer.js';
 import BScriptParser from '../grammar/antlrResult/BScriptParser.js';
 
-import Visitor from './visitor.js';
+import Listener from './listener.js';
 
 export default class Main {
     constructor(code) {
@@ -14,7 +15,8 @@ export default class Main {
         const lexer = new BScriptLexer(codeStream);
         const tokens = new CommonTokenStream(lexer);
         const parser = new BScriptParser(tokens);
-        const tree = parser.start();
-        tree.accept(new Visitor);
+        const parseTree = parser.start();
+        const listener = new Listener();
+        tree.ParseTreeWalker.DEFAULT.walk(listener, parseTree);
     }
 }
