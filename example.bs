@@ -1,1 +1,5 @@
-echo "ABC"
+wczytaj x
+
+a to x
+
+wypisz a

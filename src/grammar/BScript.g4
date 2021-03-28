@@ -2,8 +2,40 @@
 
 grammar BScript;
 
-start : 'echo' STRING ;
+start : (stat? NEWLINE)* EOF ;
 
-STRING : '"'[a-zA-Z]+'"' ;
+// Statement list
+stat: out 
+    | input 
+    | set ;
 
-WS : [ \t\r\n]+ -> skip ; // skip white chars
+// Statememnts
+out : STD_OUT ID ;
+
+input : STD_IN ID ;
+
+set : ID SET expr ;
+
+// Expresions
+expr : value ;
+
+// Possible values
+value : ID
+    | INT
+    | FLOAT ;
+
+// Key words
+STD_OUT : 'wypisz' ;
+STD_IN : 'wczytaj' ;
+SET : 'to' ;
+
+// variable name
+ID : [a-zA-Z][a-zA-Z]* ;
+
+// data types
+INT : [0-9]+ ;
+FLOAT : INT[,]INT ;
+
+// other
+WS : [ \t]+ -> skip ; // skip white chars
+NEWLINE : '\r'? '\n' ;
