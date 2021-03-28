@@ -4,6 +4,10 @@ export default class Generator {
         this.mainText = '';
     }
 
+    declare(id) {
+        this.mainText += `%${id} = alloca i32\n`;
+    }
+
     generate() {
         let text = '';
         text += this.headerText;
