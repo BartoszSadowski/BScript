@@ -38,7 +38,7 @@ export default class Generator {
 
     out(val) {
         this.mainText += `%${this.reg} = load i32, i32* %${val}\n`;
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strout, i32 0, i32 0), i32 %${this.reg})`;
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strout, i32 0, i32 0), i32 %${this.reg})\n`;
         this.reg++;
         this.calls++;
     }
