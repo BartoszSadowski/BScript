@@ -15,16 +15,10 @@ export default class Listener extends BScriptListener {
     }
 
     exitInput(ctx) {
-        const inputHeader = 'input';
-
         const ID = ctx.ID().getText();
 
         this.ensureVariable(ID);
-
-        if (!this.headers.has(inputHeader)) {
-            this.variables.add(inputHeader);
-            this.generator.addHeader(inputHeader);
-        }
+        this.ensureHeader('input');
 
         this.generator.scanf(ID);
     }
@@ -39,10 +33,26 @@ export default class Listener extends BScriptListener {
         this.generator.set(ID, val);
     }
 
+    exitOut(ctx) {
+        const val = ctx.expr().getText();
+
+        this.ensureVariable(val);
+        this.ensureHeader('output');
+
+        this.generator.out(val);
+	}
+
     ensureVariable(id) {
         if (!this.variables.has(id)) {
             this.variables.add(id);
             this.generator.declare(id);
+        }
+    }
+
+    ensureHeader(type) {
+        if (!this.headers.has(type)) {
+            this.variables.add(type);
+            this.generator.addHeader(type);
         }
     }
 }

@@ -10,7 +10,7 @@ stat: out
     | set ;
 
 // Statememnts
-out : STD_OUT ID ;
+out : STD_OUT expr ;
 
 input : STD_IN ID ;
 
