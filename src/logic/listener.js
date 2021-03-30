@@ -18,14 +18,31 @@ export default class Listener extends BScriptListener {
         const inputHeader = 'input';
 
         const ID = ctx.ID().getText();
-        if (!this.variables.has(ID)) {
-            this.variables.add(ID);
-            this.generator.declare(ID);
-        }
+
+        this.ensureVariable(ID);
+
         if (!this.headers.has(inputHeader)) {
             this.variables.add(inputHeader);
             this.generator.addHeader(inputHeader);
         }
+
         this.generator.scanf(ID);
+    }
+
+    exitSet(ctx) {
+        const ID = ctx.ID().getText();
+        const val = ctx.expr().getText();
+
+        this.ensureVariable(ID);
+        this.ensureVariable(val);
+
+        this.generator.set(ID, val);
+    }
+
+    ensureVariable(id) {
+        if (!this.variables.has(id)) {
+            this.variables.add(id);
+            this.generator.declare(id);
+        }
     }
 }
