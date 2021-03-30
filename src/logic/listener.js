@@ -51,7 +51,7 @@ export default class Listener extends BScriptListener {
 
     ensureHeader(type) {
         if (!this.headers.has(type)) {
-            this.variables.add(type);
+            this.headers.add(type);
             this.generator.addHeader(type);
         }
     }

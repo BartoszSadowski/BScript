@@ -2,4 +2,7 @@ wczytaj x
 
 a to x
 
+c to a
+
+wypisz c
 wypisz a
