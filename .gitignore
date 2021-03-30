@@ -2,3 +2,6 @@
 antlrResult
 
 node_modules
+
+test.c
+test.ll

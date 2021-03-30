@@ -7,6 +7,7 @@ export default class Listener extends BScriptListener {
         super();
         this.generator = new Generator();
         this.variables = new Set();
+        this.headers = new Set();
     }
 
     exitStart(ctx) {
@@ -14,10 +15,17 @@ export default class Listener extends BScriptListener {
     }
 
     exitInput(ctx) {
+        const inputHeader = 'input';
+
         const ID = ctx.ID().getText();
         if (!this.variables.has(ID)) {
             this.variables.add(ID);
             this.generator.declare(ID);
         }
+        if (!this.headers.has(inputHeader)) {
+            this.variables.add(inputHeader);
+            this.generator.addHeader(inputHeader);
+        }
+        this.generator.scanf(ID);
     }
 }

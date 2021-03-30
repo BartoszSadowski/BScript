@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "generate": "antlr4 -Dlanguage=JavaScript -o src/grammar/antlrResult src/grammar/BScript.g4"
+    "generate": "antlr4 -Dlanguage=JavaScript -o src/grammar/antlrResult src/grammar/BScript.g4",
+    "test": "clang -emit-llvm -S test.c -o test.ll"
   },
   "author": "Bartosz Sadowski",
   "license": "ISC",
