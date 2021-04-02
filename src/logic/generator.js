@@ -1,3 +1,7 @@
+import {
+    headerTypes
+} from './constants.js';
+
 export default class Generator {
     constructor() {
         this.headerVariables = '';
@@ -9,13 +13,13 @@ export default class Generator {
     }
 
     addHeader(type) {
-        if (type === 'input') {
+        if (type === headerTypes.INPUT) {
             this.headerVariables += '@.strin = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
             this.headerMethods += 'declare i32 @scanf(i8*, ...)\n';
             return;
         }
 
-        if (type === 'output') {
+        if (type === headerTypes.OUTPUT) {
             this.headerVariables += '@.strout = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
             this.headerMethods += 'declare i32 @printf(i8*, ...)\n';
         } 

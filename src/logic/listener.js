@@ -1,6 +1,10 @@
 import BScriptListener from '../grammar/antlrResult/BScriptListener.js';
 
 import Generator from './generator.js';
+import {
+    headerTypes,
+    valueTypes
+} from './constants.js';
 
 export default class Listener extends BScriptListener {
     constructor() {
@@ -18,29 +22,29 @@ export default class Listener extends BScriptListener {
         const ID = ctx.ID().getText();
 
         this.ensureVariable(ID);
-        this.ensureHeader('input');
+        this.ensureHeader(headerTypes.INPUT);
 
         this.generator.scanf(ID);
     }
 
     exitSet(ctx) {
         const ID = ctx.ID().getText();
-        const val = ctx.expr().getText();
+        const { value } = this.convertValue(ctx.expr().value());
 
         this.ensureVariable(ID);
-        this.ensureVariable(val);
 
-        this.generator.set(ID, val);
+        this.generator.set(ID, value);
     }
 
     exitOut(ctx) {
         const val = ctx.expr().getText();
 
         this.ensureVariable(val);
-        this.ensureHeader('output');
+        this.ensureHeader(headerTypes.OUTPUT);
 
         this.generator.out(val);
-	}
+    }
+
 
     ensureVariable(id) {
         if (!this.variables.has(id)) {
@@ -53,6 +57,27 @@ export default class Listener extends BScriptListener {
         if (!this.headers.has(type)) {
             this.headers.add(type);
             this.generator.addHeader(type);
+        }
+    }
+
+    convertValue(node) {
+        if (node.ID()) {
+            const value = node.ID().getText();
+
+            this.ensureVariable(value);
+
+            return {
+                type: valueTypes.VARIABLE,
+                value
+            }
+        }
+
+        if (node.FLOAT()) {
+            return;
+        }
+
+        if (node.INT()) {
+            return;
         }
     }
 }
