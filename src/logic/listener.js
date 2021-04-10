@@ -29,7 +29,7 @@ export default class Listener extends BScriptListener {
 
     exitSet(ctx) {
         const ID = ctx.ID().getText();
-        const { value } = this.convertValue(ctx.expr().value());
+        const value = this.convertExpresion(ctx.expr());
 
         this.ensureVariable(ID);
 
@@ -37,12 +37,11 @@ export default class Listener extends BScriptListener {
     }
 
     exitOut(ctx) {
-        const val = ctx.expr().getText();
+        const value = this.convertExpresion(ctx.expr());
 
-        this.ensureVariable(val);
         this.ensureHeader(headerTypes.OUTPUT);
 
-        this.generator.out(val);
+        this.generator.out(value);
     }
 
 
@@ -60,11 +59,24 @@ export default class Listener extends BScriptListener {
         }
     }
 
+    convertExpresion(node) {
+        if (node.value()) {
+            return this.convertValue(node.value());
+        }
+
+        if (node.add()) {
+            console.log('add');
+            return;
+        }
+    }
+
     convertValue(node) {
         if (node.ID()) {
-            const value = node.ID().getText();
+            const id = node.ID().getText();
 
-            this.ensureVariable(value);
+            this.ensureVariable(id);
+            const value = this.generator.readVar(id);
+
 
             return {
                 type: valueTypes.VARIABLE,
@@ -77,7 +89,12 @@ export default class Listener extends BScriptListener {
         }
 
         if (node.INT()) {
-            return;
+            const value = node.INT().getText();
+
+            return {
+                type: valueTypes.INT,
+                value
+            };
         }
     }
 }

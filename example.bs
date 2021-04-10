@@ -1,5 +1,6 @@
 wczytaj x
 
-a to x
+a = 2
 
 wypisz a
+wypisz 8555

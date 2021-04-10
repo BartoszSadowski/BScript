@@ -1,5 +1,5 @@
 import {
-    headerTypes
+    headerTypes, valueTypes
 } from './constants.js';
 
 export default class Generator {
@@ -29,21 +29,23 @@ export default class Generator {
         this.declarationsText += `%${id} = alloca i32\n`;
     }
 
+    readVar(id) {
+        const reg = this.reg++;
+        this.mainText += `%${reg} = load i32, i32* %${id}\n`;
+        return `%${reg}`;
+    }
+
     scanf(id) {
         this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.strin, i32 0, i32 0), i32* %${id})\n`;
         this.calls++;
     }
 
-    set(id, val) {
-        this.mainText += `%${this.reg} = load i32, i32* %${val}\n`;
-        this.mainText += `store i32 %${this.reg}, i32* %${id}\n`;
-        this.reg++;
+    set(id, { value }) {
+        this.mainText += `store i32 ${value}, i32* %${id}\n`;
     }
 
-    out(val) {
-        this.mainText += `%${this.reg} = load i32, i32* %${val}\n`;
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strout, i32 0, i32 0), i32 %${this.reg})\n`;
-        this.reg++;
+    out({ value }) {
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strout, i32 0, i32 0), i32 ${value})\n`;
         this.calls++;
     }
 

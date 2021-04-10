@@ -17,17 +17,21 @@ input : STD_IN ID ;
 set : ID SET expr ;
 
 // Expresions
-expr : value ;
+expr : value
+    | add ;
 
 // Possible values
 value : ID
     | INT
     | FLOAT ;
 
+add : value '+' expr ;
+
 // Key words
 STD_OUT : 'wypisz' ;
 STD_IN : 'wczytaj' ;
-SET : 'to' ;
+SET : 'to'
+    | '=' ;
 
 // variable name
 ID : [a-zA-Z][a-zA-Z]* ;
