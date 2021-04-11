@@ -41,6 +41,24 @@ export default class Generator {
         return { value: `%add${call}` };
     }
 
+    subValues(val1, val2) {
+        const call = this.calls++;
+        this.mainText += `%sub${call} = sub nsw i32 ${val1.value}, ${val2.value}\n`;
+        return { value: `%sub${call}` };
+    }
+
+    mulValues(val1, val2) {
+        const call = this.calls++;
+        this.mainText += `%mul${call} = mul nsw i32 ${val1.value}, ${val2.value}\n`;
+        return { value: `%mul${call}` };
+    }
+
+    divValues(val1, val2) {
+        const call = this.calls++;
+        this.mainText += `%div${call} = sdiv i32 ${val1.value}, ${val2.value}\n`;
+        return { value: `%div${call}` };
+    }
+
     scanf(id) {
         this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.strin, i32 0, i32 0), i32* %${id})\n`;
         this.calls++;

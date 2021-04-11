@@ -60,7 +60,6 @@ export default class Listener extends BScriptListener {
     }
 
     convertExpresion(node) {
-
         if (node.ADD && node.ADD()) {
             const [statement1, statement2] = node.expr();
             const val1 = this.convertExpresion(statement1);
@@ -74,7 +73,23 @@ export default class Listener extends BScriptListener {
             const val1 = this.convertExpresion(statement1);
             const val2 = this.convertExpresion(statement2);
 
-            return;
+            return this.generator.subValues(val1, val2);
+        }
+
+        if (node.MUL && node.MUL()) {
+            const [statement1, statement2] = node.expr();
+            const val1 = this.convertExpresion(statement1);
+            const val2 = this.convertExpresion(statement2);
+            
+            return this.generator.mulValues(val1, val2);
+        }
+
+        if (node.DIV && node.DIV()) {
+            const [statement1, statement2] = node.expr();
+            const val1 = this.convertExpresion(statement1);
+            const val2 = this.convertExpresion(statement2);
+
+            return this.generator.divValues(val1, val2);
         }
 
         if (node.value && node.value()) {
@@ -84,8 +99,6 @@ export default class Listener extends BScriptListener {
         if (node.OP_BRACKETS && node.OP_BRACKETS()) {
             return this.convertExpresion(node.expr()[0]);
         }
-
-        console.log(node.getText());
     }
 
     convertValue(node) {

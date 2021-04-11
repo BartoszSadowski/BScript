@@ -17,9 +17,10 @@ input : STD_IN ID ;
 set : ID SET expr ;
 
 // Expresions
-expr: expr op=(ADD | SUB) expr
+expr: expr op=(MUL | DIV) expr
+    | expr op=(ADD | SUB) expr
     | value
-    | OP_BRACKETS expr CL_BRACKETS;
+    | OP_BRACKETS expr CL_BRACKETS ;
 
 // Possible values
 value : ID
@@ -33,6 +34,8 @@ STD_IN : 'wczytaj' ;
 
 SET : 'to'
     | '=' ;
+MUL : '*' ;
+DIV : '/' ;
 ADD : '+' ;
 SUB : '-' ;
 
@@ -44,7 +47,7 @@ ID : [a-zA-Z][a-zA-Z]* ;
 
 // data types
 INT : [0-9]+ ;
-FLOAT : INT[,]INT ;
+FLOAT : INT'.'INT ;
 
 // other
 WS : [ \t]+ -> skip ; // skip white chars
