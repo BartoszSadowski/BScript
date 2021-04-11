@@ -1,7 +1,2 @@
-wczytaj x
-wczytaj y
-
-a = 2.2
-
-wypisz a
-wypisz 8555
+(C) x
+(R) y

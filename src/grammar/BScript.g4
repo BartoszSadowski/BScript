@@ -5,11 +5,14 @@ grammar BScript;
 start : (stat? NEWLINE)* EOF ;
 
 // Statement list
-stat: out 
+stat: define
+    | out 
     | input 
     | set ;
 
 // Statememnts
+define : definition ID;
+
 out : STD_OUT expr ;
 
 input : STD_IN ID ;
@@ -27,10 +30,16 @@ value : ID
     | INT
     | FLOAT ;
 
+// Possible types
+definition : INT_DEF
+    | FLOAT_DEF ;
 
 // Key words
 STD_OUT : 'wypisz' ;
 STD_IN : 'wczytaj' ;
+
+INT_DEF : '(C)' ;
+FLOAT_DEF : '(R)' ;
 
 SET : 'to'
     | '=' ;
@@ -41,6 +50,7 @@ SUB : '-' ;
 
 OP_BRACKETS : '(' ;
 CL_BRACKETS : ')' ;
+
 
 // variable name
 ID : [a-zA-Z][a-zA-Z]* ;

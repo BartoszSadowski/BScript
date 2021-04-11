@@ -1,6 +1,12 @@
 import {
-    headerTypes, valueTypes
+    headerTypes,
+    valueTypes
 } from './constants.js';
+
+const typeMap = {
+    [valueTypes.FLOAT]: 'float',
+    [valueTypes.INT]: 'i32'
+};
 
 export default class Generator {
     constructor() {
@@ -25,8 +31,8 @@ export default class Generator {
         } 
     }
 
-    declare(id) {
-        this.declarationsText += `%${id} = alloca i32\n`;
+    declare(id, type) {
+        this.declarationsText += `%${id} = alloca ${typeMap[type]}\n`;
     }
 
     readVar(id) {

@@ -10,18 +10,44 @@ export default class Listener extends BScriptListener {
     constructor() {
         super();
         this.generator = new Generator();
-        this.variables = new Set();
+        this.variables = new Map();
         this.headers = new Set();
+        this.errors = [];
     }
 
     exitStart(ctx) {
-        console.log(this.generator.generate());
+        if (this.errors.length === 0) {
+            console.log(this.generator.generate());
+            return;
+        }
+
+        this.errors.forEach(error => console.log(error));
+    }
+
+    exitDefine(ctx) {
+        let type;
+        const ID = ctx.ID().getText();
+        if (this.variables.has(ID)) {
+            const symbol = ctx.ID().symbol;
+            this.errors.push(`Linia: ${symbol.line}, Kolumna: ${symbol.column}. Zmienna o nazwie ${ID}, została wcześniej zadeklarowana.`);
+            return;
+        }
+
+        if (ctx.definition().FLOAT_DEF()) {
+            type = valueTypes.FLOAT;
+        }
+
+        if (ctx.definition().INT_DEF()) {
+            type = valueTypes.INT;
+        }
+
+        this.variables.set(ID, type);
+        this.generator.declare(ID, type);
     }
 
     exitInput(ctx) {
         const ID = ctx.ID().getText();
 
-        this.ensureVariable(ID);
         this.ensureHeader(headerTypes.INPUT);
 
         this.generator.scanf(ID);
@@ -30,8 +56,6 @@ export default class Listener extends BScriptListener {
     exitSet(ctx) {
         const ID = ctx.ID().getText();
         const value = this.convertExpresion(ctx.expr());
-
-        this.ensureVariable(ID);
 
         this.generator.set(ID, value);
     }
@@ -42,14 +66,6 @@ export default class Listener extends BScriptListener {
         this.ensureHeader(headerTypes.OUTPUT);
 
         this.generator.out(value);
-    }
-
-
-    ensureVariable(id) {
-        if (!this.variables.has(id)) {
-            this.variables.add(id);
-            this.generator.declare(id);
-        }
     }
 
     ensureHeader(type) {
@@ -105,7 +121,6 @@ export default class Listener extends BScriptListener {
         if (node.ID()) {
             const id = node.ID().getText();
 
-            this.ensureVariable(id);
             const value = this.generator.readVar(`%${id}`);
 
 
@@ -117,7 +132,14 @@ export default class Listener extends BScriptListener {
         }
 
         if (node.FLOAT()) {
-            return;
+            const value = node.FLOAT().getText();
+            console.log(value);
+
+            return {
+                isVar: false,
+                type: valueTypes.FLOAT,
+                value
+            };
         }
 
         if (node.INT()) {

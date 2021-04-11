@@ -4,7 +4,6 @@ export const headerTypes = {
 }
 
 export const valueTypes = {
-    VARIABLE: 'variable',
     INT: 'int',
     FLOAT: 'float'
 }
