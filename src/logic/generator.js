@@ -8,10 +8,15 @@ const typeMap = {
     [valueTypes.INT]: 'i32'
 };
 
+const stingInputMap = {
+    [valueTypes.FLOAT]: '@.strinfloat',
+    [valueTypes.INT]: '@.strinint'
+}
+
+
 export default class Generator {
     constructor() {
         this.headerVariables = '';
-        this.headerMethods = '';
         this.mainText = '';
         this.declarationsText = '';
         this.reg = 0;
@@ -19,16 +24,19 @@ export default class Generator {
     }
 
     addHeader(type) {
-        if (type === headerTypes.INPUT) {
-            this.headerVariables += '@.strin = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
-            this.headerMethods += 'declare i32 @scanf(i8*, ...)\n';
-            return;
-        }
-
-        if (type === headerTypes.OUTPUT) {
+        switch(type) {
+        case headerTypes.INPUT.FLOAT:
+            this.headerVariables += '@.strinfloat = private unnamed_addr constant [3 x i8] c"%f\\00"\n';
+            break;
+        case headerTypes.INPUT.INT:
+            this.headerVariables += '@.strinint = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
+            break;
+        case headerTypes.OUTPUT:
             this.headerVariables += '@.strout = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
-            this.headerMethods += 'declare i32 @printf(i8*, ...)\n';
-        } 
+            break;
+        default:
+            break;
+        }
     }
 
     declare(id, type) {
@@ -65,8 +73,8 @@ export default class Generator {
         return { value: `%div${call}` };
     }
 
-    scanf(id) {
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.strin, i32 0, i32 0), i32* %${id})\n`;
+    scanf(id, type) {
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stingInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* %${id})\n`;
         this.calls++;
     }
 
@@ -82,7 +90,8 @@ export default class Generator {
     generate() {
         let text = '';
         text += this.headerVariables;
-        text += this.headerMethods;
+        text += 'declare i32 @scanf(i8*, ...)\n';
+        text += 'declare i32 @printf(i8*, ...)\n';
         text += 'define i32 @main() {\n';
         text += 'entry: \n';
         text += this.declarationsText;

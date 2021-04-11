@@ -1,5 +1,8 @@
 export const headerTypes = {
-    INPUT: 'input',
+    INPUT: {
+        FLOAT: 'input_float',
+        INT: 'input_int'
+    },
     OUTPUT: 'output'
 }
 

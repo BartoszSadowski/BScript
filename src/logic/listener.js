@@ -45,12 +45,37 @@ export default class Listener extends BScriptListener {
         this.generator.declare(ID, type);
     }
 
+    isVarDefined(ID) {
+        const id = ID.getText()
+        if (!this.variables.has(id)) {
+            const symbol = ID.symbol;
+            this.errors.push(`Linia: ${symbol.line}, Kolumna: ${symbol.column}. Zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
+            return false;
+        }
+
+        return true;
+    }
+
     exitInput(ctx) {
-        const ID = ctx.ID().getText();
+        const ID = ctx.ID();
+        const id = ID.getText();
 
-        this.ensureHeader(headerTypes.INPUT);
+        if (this.isVarDefined(ID)) {
+            const type = this.variables.get(id);
 
-        this.generator.scanf(ID);
+            switch(type) {
+            case valueTypes.INT:
+                this.ensureHeader(headerTypes.INPUT.INT);
+                break;
+            case valueTypes.FLOAT:
+                this.ensureHeader(headerTypes.INPUT.FLOAT);
+                break;
+            default:
+                break;
+            }
+    
+            this.generator.scanf(ID.getText(), type);
+        }
     }
 
     exitSet(ctx) {
