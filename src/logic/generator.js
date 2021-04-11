@@ -31,8 +31,14 @@ export default class Generator {
 
     readVar(id) {
         const reg = this.reg++;
-        this.mainText += `%${reg} = load i32, i32* %${id}\n`;
+        this.mainText += `%${reg} = load i32, i32* ${id}\n`;
         return `%${reg}`;
+    }
+
+    addValues(val1, val2) {
+        const call = this.calls++;
+        this.mainText += `%add${call} = add nsw i32 ${val1.value}, ${val2.value}\n`;
+        return { value: `%add${call}` };
     }
 
     scanf(id) {

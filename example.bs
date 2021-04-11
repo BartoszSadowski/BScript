@@ -1,6 +1,7 @@
 wczytaj x
+wczytaj y
 
-a = 2
+a = x + ( y + 2 )
 
 wypisz a
 wypisz 8555

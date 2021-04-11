@@ -17,21 +17,27 @@ input : STD_IN ID ;
 set : ID SET expr ;
 
 // Expresions
-expr : value
-    | add ;
+expr: expr op=(ADD | SUB) expr
+    | value
+    | OP_BRACKETS expr CL_BRACKETS;
 
 // Possible values
 value : ID
     | INT
     | FLOAT ;
 
-add : value '+' expr ;
 
 // Key words
 STD_OUT : 'wypisz' ;
 STD_IN : 'wczytaj' ;
+
 SET : 'to'
     | '=' ;
+ADD : '+' ;
+SUB : '-' ;
+
+OP_BRACKETS : '(' ;
+CL_BRACKETS : ')' ;
 
 // variable name
 ID : [a-zA-Z][a-zA-Z]* ;

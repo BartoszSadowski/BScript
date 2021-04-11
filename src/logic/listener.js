@@ -60,14 +60,32 @@ export default class Listener extends BScriptListener {
     }
 
     convertExpresion(node) {
-        if (node.value()) {
+
+        if (node.ADD && node.ADD()) {
+            const [statement1, statement2] = node.expr();
+            const val1 = this.convertExpresion(statement1);
+            const val2 = this.convertExpresion(statement2);
+            
+            return this.generator.addValues(val1, val2);
+        }
+
+        if (node.SUB && node.SUB()) {
+            const [statement1, statement2] = node.expr();
+            const val1 = this.convertExpresion(statement1);
+            const val2 = this.convertExpresion(statement2);
+
+            return;
+        }
+
+        if (node.value && node.value()) {
             return this.convertValue(node.value());
         }
 
-        if (node.add()) {
-            console.log('add');
-            return;
+        if (node.OP_BRACKETS && node.OP_BRACKETS()) {
+            return this.convertExpresion(node.expr()[0]);
         }
+
+        console.log(node.getText());
     }
 
     convertValue(node) {
@@ -75,11 +93,12 @@ export default class Listener extends BScriptListener {
             const id = node.ID().getText();
 
             this.ensureVariable(id);
-            const value = this.generator.readVar(id);
+            const value = this.generator.readVar(`%${id}`);
 
 
             return {
-                type: valueTypes.VARIABLE,
+                isVar: true,
+                type: valueTypes.INT,
                 value
             }
         }
@@ -92,6 +111,7 @@ export default class Listener extends BScriptListener {
             const value = node.INT().getText();
 
             return {
+                isVar: false,
                 type: valueTypes.INT,
                 value
             };
