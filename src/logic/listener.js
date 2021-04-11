@@ -21,7 +21,7 @@ export default class Listener extends BScriptListener {
             return;
         }
 
-        this.errors.forEach(error => console.log(error));
+        this.errors.forEach(error => console.error(error));
     }
 
     exitDefine(ctx) {
@@ -29,7 +29,7 @@ export default class Listener extends BScriptListener {
         const ID = ctx.ID().getText();
         if (this.variables.has(ID)) {
             const symbol = ctx.ID().symbol;
-            this.errors.push(`Linia: ${symbol.line}, Kolumna: ${symbol.column}. Zmienna o nazwie ${ID}, została wcześniej zadeklarowana.`);
+            this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${ID}, została wcześniej zadeklarowana.`);
             return;
         }
 
@@ -49,7 +49,7 @@ export default class Listener extends BScriptListener {
         const id = ID.getText()
         if (!this.variables.has(id)) {
             const symbol = ID.symbol;
-            this.errors.push(`Linia: ${symbol.line}, Kolumna: ${symbol.column}. Zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
+            this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
             return false;
         }
 
