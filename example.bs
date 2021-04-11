@@ -1,5 +1,12 @@
-wczytaj x
+(R) x
+(C) y
+(C) z
 
-a to x
+x = 2
+y = 2
 
-wypisz a
+z = x + y
+
+wypisz x
+wypisz y
+wypisz z
