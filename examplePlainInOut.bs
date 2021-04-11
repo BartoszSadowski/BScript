@@ -1,0 +1,9 @@
+(C) calkowita
+
+wczytaj calkowita
+wypisz calkowita
+
+(R) rzeczywista
+
+wczytaj rzeczywista
+wypisz rzeczywista

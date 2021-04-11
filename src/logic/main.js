@@ -21,8 +21,9 @@ export default class Main {
         parser.removeErrorListeners();
         parser.addErrorListener({
             syntaxError: (recognizer, offendingSymbol, line, column, msg, err) => {
-                const correct = msg.match(/extraneous input '.*' expecting {(.*)}/)[1];
-                listener.errors.push(`Linia ${line}:${column} nieoczekiwany znak '${offendingSymbol.text}', oczekiwano symbolu z następującej listy: < ${correct} >`);
+                const expected = msg.match(/extraneous input '.*' expecting {(.*)}/);
+                const correct = (expected && expected.length > 1) ? `, oczekiwano symbolu z następującej listy: < ${correct} >` : '';
+                listener.errors.push(`Linia ${line}:${column} nieoczekiwany znak '${offendingSymbol.text}'${correct}`);
             }
         });
 

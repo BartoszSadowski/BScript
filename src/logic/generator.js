@@ -180,7 +180,7 @@ export default class Generator {
         const loaded = this.loadValue(val);
 
         const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${this.calls++}`; 
-        this.mainText += loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float %2 to double\n`;
+        this.mainText += loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float ${loaded.value} to double\n`;
         const type = loaded.type !== valueTypes.FLOAT ? loaded.type : valueTypes.DOUBLE; 
         this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`;
         this.calls++;

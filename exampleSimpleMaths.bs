@@ -1,0 +1,13 @@
+(C) xA
+(C) xB
+
+wczytaj xA
+wczytaj xB
+
+wypisz xA + xB
+
+wypisz xA - xB
+
+wypisz xA * xB
+
+wypisz xA / xB
