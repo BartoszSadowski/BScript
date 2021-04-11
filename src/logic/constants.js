@@ -3,10 +3,14 @@ export const headerTypes = {
         FLOAT: 'input_float',
         INT: 'input_int'
     },
-    OUTPUT: 'output'
+    OUTPUT: {
+        FLOAT: 'output_float',
+        INT: 'output_int'
+    }
 }
 
 export const valueTypes = {
     INT: 'int',
-    FLOAT: 'float'
+    FLOAT: 'float',
+    DOUBLE: 'double'
 }

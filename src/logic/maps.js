@@ -4,12 +4,18 @@ import {
 
 export const typeMap = {
     [valueTypes.FLOAT]: 'float',
-    [valueTypes.INT]: 'i32'
+    [valueTypes.INT]: 'i32',
+    [valueTypes.DOUBLE]: 'double'
 };
 
 export const stringInputMap = {
     [valueTypes.FLOAT]: '@.strinfloat',
     [valueTypes.INT]: '@.strinint'
+}
+
+export const stringOutputMap = {
+    [valueTypes.DOUBLE]: '@.stroutfloat',
+    [valueTypes.INT]: '@.stroutint'
 }
 
 export const addMethodMap = {

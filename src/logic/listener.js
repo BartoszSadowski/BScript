@@ -95,9 +95,20 @@ export default class Listener extends BScriptListener {
     exitOut(ctx) {
         const value = this.convertExpresion(ctx.expr());
 
-        this.ensureHeader(headerTypes.OUTPUT);
+        const type = value.type;
 
-        this.generator.out(value);
+        switch(type) {
+        case valueTypes.INT:
+            this.ensureHeader(headerTypes.OUTPUT.INT);
+            break;
+        case valueTypes.FLOAT:
+            this.ensureHeader(headerTypes.OUTPUT.FLOAT);
+            break;
+        default:
+            break;
+        }
+
+        this.generator.out(value, type);
     }
 
     ensureHeader(type) {

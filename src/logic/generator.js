@@ -5,6 +5,7 @@ import {
 import {
     typeMap,
     stringInputMap,
+    stringOutputMap,
     addMethodMap,
     subMethodMap,
     mulMethodMap,
@@ -30,8 +31,11 @@ export default class Generator {
         case headerTypes.INPUT.INT:
             this.headerVariables += '@.strinint = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
             break;
-        case headerTypes.OUTPUT:
-            this.headerVariables += '@.strout = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
+        case headerTypes.OUTPUT.FLOAT:
+            this.headerVariables += '@.stroutfloat = private unnamed_addr constant [4 x i8] c"%f\\0A\\00"\n';
+            break;
+        case headerTypes.OUTPUT.INT:
+            this.headerVariables += '@.stroutint = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
             break;
         default:
             break;
@@ -99,15 +103,25 @@ export default class Generator {
             }
         }
 
-        const reg = val.isPtr ? val.value : `%${this.reg++}`;
+        const loaded = this.loadValue(val);
         const conv = `%conv${this.calls++}`;
-        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
-        this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${reg} to ${typeMap[type]}\n`
+        this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`
 
         return {
             isPtr: true,
             value: conv,
             type
+        }
+    }
+
+    loadValue(val) {
+        const reg = val.isPtr ? val.value : `%${this.reg++}`;
+        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
+
+        return {
+            ...val,
+            value: reg,
+            isPtr: true
         }
     }
 
@@ -158,11 +172,17 @@ export default class Generator {
 
     set(id, val) {
         const value = this.castType(val, id.type);
+
         this.mainText += `store ${typeMap[id.type]} ${value.value}, ${typeMap[id.type]}* ${id.value}\n`;
     }
 
-    out({ value }) {
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.strout, i32 0, i32 0), i32 ${value})\n`;
+    out(val) {
+        const loaded = this.loadValue(val);
+
+        const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${this.calls++}`; 
+        this.mainText += loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float %2 to double\n`;
+        const type = loaded.type !== valueTypes.FLOAT ? loaded.type : valueTypes.DOUBLE; 
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`;
         this.calls++;
     }
 

@@ -6,3 +6,7 @@ x = 2
 y = 2
 
 z = x + y
+
+wypisz x
+wypisz y
+wypisz z
