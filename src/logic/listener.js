@@ -85,7 +85,10 @@ export default class Listener extends BScriptListener {
         if (this.isVarDefined(ID)) {
             const value = this.convertExpresion(ctx.expr());
     
-            this.generator.set(id, value);
+            this.generator.set({
+                value: `%${id}`,
+                type: this.variables.get(id)
+            }, value);
         }
     }
 
@@ -145,14 +148,16 @@ export default class Listener extends BScriptListener {
 
             return {
                 isVar: true,
+                isPtr: false,
                 type: type,
-                value: this.generator.readVar(`%${id}`, type)
+                value: `%${id}`
             }
         }
 
         if (node.FLOAT()) {
             return {
                 isVar: false,
+                isPtr: false,
                 type: valueTypes.FLOAT,
                 value: node.FLOAT.getText()
             };
@@ -161,6 +166,7 @@ export default class Listener extends BScriptListener {
         if (node.INT()) {
             return {
                 isVar: false,
+                isPtr: false,
                 type: valueTypes.INT,
                 value: node.INT().getText()
             };

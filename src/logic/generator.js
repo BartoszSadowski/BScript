@@ -43,9 +43,12 @@ export default class Generator {
     }
 
     readVar(id, type) {
-        const reg = this.reg++;
-        this.mainText += `%${reg} = load ${typeMap[type]}, ${typeMap[type]}* ${id}\n`;
-        return `%${reg}`;
+        const reg = `%${this.reg++}`;
+        this.mainText += `${reg} = load ${typeMap[type]}, ${typeMap[type]}* ${id}\n`;
+        return {
+            value: reg,
+            type
+        };
     }
 
     typeToWeight(type) {
@@ -70,16 +73,39 @@ export default class Generator {
     }
 
     castType(val, type) {
+        if (val.type === type && val.isVar) {
+            return this.readVar(val.value, val.type);
+        }
+        
         if (val.type === type) {
             return val;
         }
 
-        const reg = `%${this.reg++}`;
-        const conv = `conv${this.calls++}`;
-        this.main += `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
-        this.main += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${reg} to ${typeMap[type]}\n`
+        if (!val.isVar && !val.isPtr) {
+            if (val.type === valueTypes.FLOAT && type === valueTypes.INT) {
+                return {
+                    ...val,
+                    type,
+                    value: val.value.split(',')[0]
+                };
+            }
+    
+            if (val.type === valueTypes.INT && type === valueTypes.FLOAT) {
+                return {
+                    ...val,
+                    type,
+                    value: `${val.value}.0`
+                };
+            }
+        }
+
+        const reg = val.isPtr ? val.value : `%${this.reg++}`;
+        const conv = `%conv${this.calls++}`;
+        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
+        this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${reg} to ${typeMap[type]}\n`
 
         return {
+            isPtr: true,
             value: conv,
             type
         }
@@ -102,6 +128,8 @@ export default class Generator {
         this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
 
         return {
+            isPtr: true,
+            isVar: true,
             value,
             type
         };
@@ -128,8 +156,9 @@ export default class Generator {
         this.calls++;
     }
 
-    set(id, { value }) {
-        this.mainText += `store i32 ${value}, i32* %${id}\n`;
+    set(id, val) {
+        const value = this.castType(val, id.type);
+        this.mainText += `store ${typeMap[id.type]} ${value.value}, ${typeMap[id.type]}* ${id.value}\n`;
     }
 
     out({ value }) {

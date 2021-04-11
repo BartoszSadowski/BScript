@@ -1,6 +1,6 @@
 import {
     valueTypes
-} from './constants';
+} from './constants.js';
 
 export const typeMap = {
     [valueTypes.FLOAT]: 'float',
