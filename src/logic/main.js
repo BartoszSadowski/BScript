@@ -18,7 +18,7 @@ export default class Main {
         const parser = new BScriptParser(tokens);
 
         const listener = new Listener();
-        parser.removeErrorListeners('syntaxError');
+        parser.removeErrorListeners();
         parser.addErrorListener({
             syntaxError: (recognizer, offendingSymbol, line, column, msg, err) => {
                 const correct = msg.match(/extraneous input '.*' expecting {(.*)}/)[1];
