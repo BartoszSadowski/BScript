@@ -2,17 +2,16 @@ import {
     headerTypes,
     valueTypes
 } from './constants.js';
+import {
+    typeMap,
+    stringInputMap,
+    addMethodMap,
+    subMethodMap,
+    mulMethodMap,
+    divMethodMap
+} from './maps.js';
 
-const typeMap = {
-    [valueTypes.FLOAT]: 'float',
-    [valueTypes.INT]: 'i32'
-};
-
-const stingInputMap = {
-    [valueTypes.FLOAT]: '@.strinfloat',
-    [valueTypes.INT]: '@.strinint'
-}
-
+const typeWeights = [valueTypes.FLOAT, valueTypes.INT];
 
 export default class Generator {
     constructor() {
@@ -43,38 +42,89 @@ export default class Generator {
         this.declarationsText += `%${id} = alloca ${typeMap[type]}\n`;
     }
 
-    readVar(id) {
+    readVar(id, type) {
         const reg = this.reg++;
-        this.mainText += `%${reg} = load i32, i32* ${id}\n`;
+        this.mainText += `%${reg} = load ${typeMap[type]}, ${typeMap[type]}* ${id}\n`;
         return `%${reg}`;
     }
 
+    typeToWeight(type) {
+        return typeWeights.findIndex(t => t === type);
+    }
+
+    typeConverter(currentType, targetType) {
+        if (currentType === valueTypes.FLOAT && targetType === valueTypes.INT) {
+            return 'fptosi';
+        }
+
+        if (currentType === valueTypes.INT && targetType === valueTypes.FLOAT) {
+            return 'sitofp';
+        }
+    }
+
+    commonType(type1, type2) {
+        const weight1 = this.typeToWeight(type1);
+        const weight2 = this.typeToWeight(type2);
+
+        return weight1 < weight2 ? typeWeights[weight1] : typeWeights[weight2];
+    }
+
+    castType(val, type) {
+        if (val.type === type) {
+            return val;
+        }
+
+        const reg = `%${this.reg++}`;
+        const conv = `conv${this.calls++}`;
+        this.main += `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
+        this.main += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${reg} to ${typeMap[type]}\n`
+
+        return {
+            value: conv,
+            type
+        }
+    }
+
+    toCommonType(val1, val2) {
+        const commonType = this.commonType(val1.type, val2.type);
+
+        return [
+            this.castType(val1, commonType),
+            this.castType(val2, commonType)
+        ];
+    }
+
+    mathOperation(v1, v2, methodMap) {
+        const [val1, val2] = this.toCommonType(v1, v2);
+        const type = val1.type;
+
+        const value = `%math${this.calls++}`;
+        this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
+
+        return {
+            value,
+            type
+        };
+    }
+
     addValues(val1, val2) {
-        const call = this.calls++;
-        this.mainText += `%add${call} = add nsw i32 ${val1.value}, ${val2.value}\n`;
-        return { value: `%add${call}` };
+        return this.mathOperation(val1, val2, addMethodMap);
     }
 
     subValues(val1, val2) {
-        const call = this.calls++;
-        this.mainText += `%sub${call} = sub nsw i32 ${val1.value}, ${val2.value}\n`;
-        return { value: `%sub${call}` };
+        return this.mathOperation(val1, val2, subMethodMap);
     }
 
     mulValues(val1, val2) {
-        const call = this.calls++;
-        this.mainText += `%mul${call} = mul nsw i32 ${val1.value}, ${val2.value}\n`;
-        return { value: `%mul${call}` };
+        return this.mathOperation(val1, val2, mulMethodMap);
     }
 
     divValues(val1, val2) {
-        const call = this.calls++;
-        this.mainText += `%div${call} = sdiv i32 ${val1.value}, ${val2.value}\n`;
-        return { value: `%div${call}` };
+        return this.mathOperation(val1, val2, divMethodMap);
     }
 
     scanf(id, type) {
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stingInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* %${id})\n`;
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* %${id})\n`;
         this.calls++;
     }
 

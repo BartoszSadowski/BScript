@@ -79,10 +79,14 @@ export default class Listener extends BScriptListener {
     }
 
     exitSet(ctx) {
-        const ID = ctx.ID().getText();
-        const value = this.convertExpresion(ctx.expr());
+        const ID = ctx.ID();
+        const id = ID.getText();
 
-        this.generator.set(ID, value);
+        if (this.isVarDefined(ID)) {
+            const value = this.convertExpresion(ctx.expr());
+    
+            this.generator.set(id, value);
+        }
     }
 
     exitOut(ctx) {
@@ -101,36 +105,26 @@ export default class Listener extends BScriptListener {
     }
 
     convertExpresion(node) {
-        if (node.ADD && node.ADD()) {
+        if (node.op) {
             const [statement1, statement2] = node.expr();
             const val1 = this.convertExpresion(statement1);
             const val2 = this.convertExpresion(statement2);
             
-            return this.generator.addValues(val1, val2);
-        }
-
-        if (node.SUB && node.SUB()) {
-            const [statement1, statement2] = node.expr();
-            const val1 = this.convertExpresion(statement1);
-            const val2 = this.convertExpresion(statement2);
-
-            return this.generator.subValues(val1, val2);
-        }
-
-        if (node.MUL && node.MUL()) {
-            const [statement1, statement2] = node.expr();
-            const val1 = this.convertExpresion(statement1);
-            const val2 = this.convertExpresion(statement2);
-            
-            return this.generator.mulValues(val1, val2);
-        }
-
-        if (node.DIV && node.DIV()) {
-            const [statement1, statement2] = node.expr();
-            const val1 = this.convertExpresion(statement1);
-            const val2 = this.convertExpresion(statement2);
-
-            return this.generator.divValues(val1, val2);
+            if (node.ADD && node.ADD()) {
+                return this.generator.addValues(val1, val2);
+            }
+    
+            if (node.SUB && node.SUB()) {
+                return this.generator.subValues(val1, val2);
+            }
+    
+            if (node.MUL && node.MUL()) {
+                return this.generator.mulValues(val1, val2);
+            }
+    
+            if (node.DIV && node.DIV()) {
+                return this.generator.divValues(val1, val2);
+            }
         }
 
         if (node.value && node.value()) {
@@ -144,36 +138,31 @@ export default class Listener extends BScriptListener {
 
     convertValue(node) {
         if (node.ID()) {
+            this.isVarDefined(node.ID());
+
             const id = node.ID().getText();
-
-            const value = this.generator.readVar(`%${id}`);
-
+            const type = this.variables.get(id);
 
             return {
                 isVar: true,
-                type: valueTypes.INT,
-                value
+                type: type,
+                value: this.generator.readVar(`%${id}`, type)
             }
         }
 
         if (node.FLOAT()) {
-            const value = node.FLOAT().getText();
-            console.log(value);
-
             return {
                 isVar: false,
                 type: valueTypes.FLOAT,
-                value
+                value: node.FLOAT.getText()
             };
         }
 
         if (node.INT()) {
-            const value = node.INT().getText();
-
             return {
                 isVar: false,
                 type: valueTypes.INT,
-                value
+                value: node.INT().getText()
             };
         }
     }
