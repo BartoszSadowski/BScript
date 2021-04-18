@@ -22,7 +22,7 @@ export default class Main {
         parser.addErrorListener({
             syntaxError: (recognizer, offendingSymbol, line, column, msg, err) => {
                 const expected = msg.match(/extraneous input '.*' expecting {(.*)}/);
-                const correct = (expected && expected.length > 1) ? `, oczekiwano symbolu z następującej listy: < ${correct} >` : '';
+                const correct = (expected && expected.length > 1) ? `, oczekiwano symbolu z następującej listy: < ${expected[1]} >` : '';
                 listener.errors.push(`Linia ${line}:${column} nieoczekiwany znak '${offendingSymbol.text}'${correct}`);
             }
         });

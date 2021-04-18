@@ -46,9 +46,9 @@ export default class Listener extends BScriptListener {
     }
 
     isVarDefined(ID) {
-        const id = ID.getText()
+        const id = ID.getText ? ID.getText() : ID.text;
         if (!this.variables.has(id)) {
-            const symbol = ID.symbol;
+            const symbol = ID.symbol || ID;
             this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
             return false;
         }
@@ -79,8 +79,8 @@ export default class Listener extends BScriptListener {
     }
 
     exitSet(ctx) {
-        const ID = ctx.ID();
-        const id = ID.getText();
+        const ID = ctx.id;
+        const id = ID.text;
 
         if (this.isVarDefined(ID)) {
             const value = this.convertExpresion(ctx.expr());
