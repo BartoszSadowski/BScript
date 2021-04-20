@@ -6,6 +6,8 @@ import {
     valueTypes
 } from './constants.js';
 
+const missing = '<missing undefined>';
+
 export default class Listener extends BScriptListener {
     constructor() {
         super();
@@ -25,7 +27,6 @@ export default class Listener extends BScriptListener {
     }
 
     exitDefine(ctx) {
-        let type;
         const ID = ctx.ID().getText();
         if (this.variables.has(ID)) {
             const symbol = ctx.ID().symbol;
@@ -33,16 +34,41 @@ export default class Listener extends BScriptListener {
             return;
         }
 
-        if (ctx.definition().FLOAT_DEF()) {
-            type = valueTypes.FLOAT;
+        const config = this.determineDefinitionType(ctx.definition());
+
+        this.variables.set(ID, config);
+        this.generator.declare(ID, config);
+    }
+
+    determineDefinitionType(node) {
+        if (node.FLOAT_DEF && node.FLOAT_DEF()) {
+            return {
+                type: valueTypes.FLOAT,
+                isArray: false
+            };
         }
 
-        if (ctx.definition().INT_DEF()) {
-            type = valueTypes.INT;
+        if (node.INT_DEF && node.INT_DEF()) {
+            return {
+                type: valueTypes.INT,
+                isArray: false
+            };
         }
 
-        this.variables.set(ID, type);
-        this.generator.declare(ID, type);
+        if (node.array_def && node.array_def()) {
+            const number = node.array_def().INT().getText();
+            
+            if (number === missing) {
+                const symbol = node.array_def().INT().symbol;
+                this.errors.push(`Linia ${symbol.line}:${symbol.column} błędna długość tablicy`);
+            }
+
+            return {
+                ...this.determineDefinitionType(node.array_def()),
+                isArray: true,
+                length: node.array_def().INT().getText()
+            };
+        }
     }
 
     isVarDefined(ID) {
@@ -61,7 +87,7 @@ export default class Listener extends BScriptListener {
         const id = ID.getText();
 
         if (this.isVarDefined(ID)) {
-            const type = this.variables.get(id);
+            const { type } = this.variables.get(id);
 
             switch(type) {
             case valueTypes.INT:
@@ -87,7 +113,7 @@ export default class Listener extends BScriptListener {
     
             this.generator.set({
                 value: `%${id}`,
-                type: this.variables.get(id)
+                type: this.variables.get(id).type
             }, value);
         }
     }
@@ -155,7 +181,7 @@ export default class Listener extends BScriptListener {
             this.isVarDefined(node.ID());
 
             const id = node.ID().getText();
-            const type = this.variables.get(id);
+            const { type } = this.variables.get(id);
 
             return {
                 isVar: true,

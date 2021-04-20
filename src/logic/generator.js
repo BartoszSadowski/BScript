@@ -42,8 +42,8 @@ export default class Generator {
         }
     }
 
-    declare(id, type) {
-        this.declarationsText += `%${id} = alloca ${typeMap[type]}\n`;
+    declare(id, { type, isArray, length }) {
+        this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? ` ]` : ''}\n`;
     }
 
     readVar(id, type) {

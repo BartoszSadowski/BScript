@@ -11,7 +11,7 @@ stat: define
     | set ;
 
 // Statememnts
-define : definition ID;
+define : definition ID ;
 
 out : STD_OUT expr ;
 
@@ -42,7 +42,7 @@ STD_IN : 'wczytaj' ;
 
 INT_DEF : '(C)' ;
 FLOAT_DEF : '(R)' ;
-array_def : '[' type=(INT_DEF | FLOAT_DEF) ']' '<' INT '>' ID ;
+array_def : '[' type=(INT_DEF | FLOAT_DEF) ']' '<' INT '>' ;
 
 SET : 'to'
     | '=' ;
