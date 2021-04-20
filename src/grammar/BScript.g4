@@ -17,7 +17,8 @@ out : STD_OUT expr ;
 
 input : STD_IN ID ;
 
-set : id=(ARRAY_ID | ID) SET expr ;
+set : array_id SET expr 
+    | ID SET expr;
 
 // Expresions
 expr: expr op=(MUL | DIV) expr
@@ -26,7 +27,7 @@ expr: expr op=(MUL | DIV) expr
     | OP_BRACKETS expr CL_BRACKETS ;
 
 // Possible values
-value : ARRAY_ID
+value : array_id
     | ID
     | INT
     | FLOAT ;
@@ -56,7 +57,7 @@ CL_BRACKETS : ')' ;
 
 
 // variable name
-ARRAY_ID : ID '[' INT ']' ;
+array_id : ID '[' INT ']' ;
 ID : [a-zA-Z][a-zA-Z]* ;
 
 // data types

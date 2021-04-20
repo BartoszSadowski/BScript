@@ -105,17 +105,46 @@ export default class Listener extends BScriptListener {
     }
 
     exitSet(ctx) {
-        const ID = ctx.id;
-        const id = ID.text;
+        const {
+            ID,
+            idx
+        } = this.loadId(ctx);
+
+        const id = ID.getText();
 
         if (this.isVarDefined(ID)) {
             const value = this.convertExpresion(ctx.expr());
     
             this.generator.set({
                 value: `%${id}`,
-                type: this.variables.get(id).type
+                config: { ...this.variables.get(id), idx }
             }, value);
         }
+    }
+
+    loadId(node) {
+        if (node.ID && node.ID()) {
+            return {
+                ID: node.ID()
+            };
+        }
+
+        if (node.array_id && node.array_id()) {
+            const ID = node.array_id().ID();
+            const idx = node.array_id().INT().getText();
+
+            if (idx === missing) {
+                const symbol = node.array_id().INT().symbol;
+                this.errors.push(`Linia ${symbol.line}:${symbol.column} brak indeksu w tablicy`);
+            }
+
+            return {
+                ID,
+                idx
+            };
+        }
+
+
     }
 
     exitOut(ctx) {

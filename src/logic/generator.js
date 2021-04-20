@@ -171,9 +171,18 @@ export default class Generator {
     }
 
     set(id, val) {
-        const value = this.castType(val, id.type);
+        const value = this.castType(val, id.config.type);
 
-        this.mainText += `store ${typeMap[id.type]} ${value.value}, ${typeMap[id.type]}* ${id.value}\n`;
+        console.log(id);
+        let entryPtr = id.value;
+
+        if (id.config.isArray) {
+            const arrayidx = `%arrayidx${this.calls++}`;
+            this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`
+            entryPtr = arrayidx;
+        }
+
+        this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
     }
 
     out(val) {
