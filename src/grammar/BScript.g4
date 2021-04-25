@@ -11,13 +11,15 @@ stat: define
     | set ;
 
 // Statememnts
-define : definition ID;
+define : definition ID ;
 
 out : STD_OUT expr ;
 
-input : STD_IN ID ;
+input : STD_IN ID 
+    | STD_IN array_id ;
 
-set : ID SET expr ;
+set : array_id SET expr 
+    | ID SET expr;
 
 // Expresions
 expr: expr op=(MUL | DIV) expr
@@ -26,13 +28,15 @@ expr: expr op=(MUL | DIV) expr
     | OP_BRACKETS expr CL_BRACKETS ;
 
 // Possible values
-value : ID
+value : array_id
+    | ID
     | INT
     | FLOAT ;
 
 // Possible types
 definition : INT_DEF
-    | FLOAT_DEF ;
+    | FLOAT_DEF 
+    | array_def ;
 
 // Key words
 STD_OUT : 'wypisz' ;
@@ -40,6 +44,7 @@ STD_IN : 'wczytaj' ;
 
 INT_DEF : '(C)' ;
 FLOAT_DEF : '(R)' ;
+array_def : '[' type=(INT_DEF | FLOAT_DEF) ']' '<' INT '>' ;
 
 SET : 'to'
     | '=' ;
@@ -53,6 +58,7 @@ CL_BRACKETS : ')' ;
 
 
 // variable name
+array_id : ID '[' INT ']' ;
 ID : [a-zA-Z][a-zA-Z]* ;
 
 // data types
