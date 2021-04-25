@@ -163,7 +163,9 @@ export default class Generator {
     }
 
     scanf(id, type) {
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* %${id})\n`;
+        const ptr = this.getArrayPtr(id);
+
+        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`;
         this.calls++;
     }
 

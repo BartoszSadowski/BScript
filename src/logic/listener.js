@@ -90,7 +90,10 @@ export default class Listener extends BScriptListener {
     }
 
     exitInput(ctx) {
-        const ID = ctx.ID();
+        const {
+            ID,
+            idx
+         } = this.loadId(ctx);
         const id = ID.getText();
 
         if (this.isVarDefined(ID)) {
@@ -107,7 +110,10 @@ export default class Listener extends BScriptListener {
                 break;
             }
     
-            this.generator.scanf(ID.getText(), type);
+            this.generator.scanf({
+                value: `%${id}`,
+                config: { ...this.variables.get(id), idx }
+            }, type);
         }
     }
 
