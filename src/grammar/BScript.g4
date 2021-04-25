@@ -15,7 +15,8 @@ define : definition ID ;
 
 out : STD_OUT expr ;
 
-input : STD_IN ID ;
+input : STD_IN ID 
+    | STD_IN array_id ;
 
 set : array_id SET expr 
     | ID SET expr;

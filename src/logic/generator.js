@@ -43,16 +43,7 @@ export default class Generator {
     }
 
     declare(id, { type, isArray, length }) {
-        this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? ` ]` : ''}\n`;
-    }
-
-    readVar(id, type) {
-        const reg = `%${this.reg++}`;
-        this.mainText += `${reg} = load ${typeMap[type]}, ${typeMap[type]}* ${id}\n`;
-        return {
-            value: reg,
-            type
-        };
+        this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
     }
 
     typeToWeight(type) {
@@ -78,7 +69,7 @@ export default class Generator {
 
     castType(val, type) {
         if (val.type === type && val.isVar) {
-            return this.readVar(val.value, val.type);
+            return this.loadValue(val);
         }
         
         if (val.type === type) {
@@ -115,8 +106,10 @@ export default class Generator {
     }
 
     loadValue(val) {
+        const value = this.getArrayPtr(val);
+
         const reg = val.isPtr ? val.value : `%${this.reg++}`;
-        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${val.value}\n`
+        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`
 
         return {
             ...val,
@@ -144,8 +137,12 @@ export default class Generator {
         return {
             isPtr: true,
             isVar: true,
+            isArray: false,
             value,
-            type
+            type,
+            config: {
+                isArray: false
+            }
         };
     }
 
@@ -170,17 +167,22 @@ export default class Generator {
         this.calls++;
     }
 
-    set(id, val) {
-        const value = this.castType(val, id.config.type);
-
-        console.log(id);
-        let entryPtr = id.value;
+    getArrayPtr(id) {
+        const entryPtr = id.value;
 
         if (id.config.isArray) {
             const arrayidx = `%arrayidx${this.calls++}`;
             this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`
-            entryPtr = arrayidx;
+            return arrayidx;
         }
+
+        return entryPtr;
+    }
+
+    set(id, val) {
+        const value = this.castType(val, id.config.type);
+
+        const entryPtr = this.getArrayPtr(id);
 
         this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
     }

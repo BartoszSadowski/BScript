@@ -82,6 +82,13 @@ export default class Listener extends BScriptListener {
         return true;
     }
 
+    isIndexInBound(INT, length) {
+        if (INT.getText() >= length) {
+            const symbol = INT.symbol;
+            this.errors.push(`Linia ${symbol.line}:${symbol.column} id w tablicy przekracza jej długość. Id: ${INT.getText()}, długość: ${length}`);
+        }
+    }
+
     exitInput(ctx) {
         const ID = ctx.ID();
         const id = ID.getText();
@@ -133,6 +140,8 @@ export default class Listener extends BScriptListener {
             const ID = node.array_id().ID();
             const idx = node.array_id().INT().getText();
 
+            this.isIndexInBound(node.array_id().INT(), this.variables.get(ID.getText()).length);
+
             if (idx === missing) {
                 const symbol = node.array_id().INT().symbol;
                 this.errors.push(`Linia ${symbol.line}:${symbol.column} brak indeksu w tablicy`);
@@ -150,7 +159,7 @@ export default class Listener extends BScriptListener {
     exitOut(ctx) {
         const value = this.convertExpresion(ctx.expr());
 
-        const type = value.type;
+        const { type } = value;
 
         switch(type) {
         case valueTypes.INT:
@@ -163,7 +172,7 @@ export default class Listener extends BScriptListener {
             break;
         }
 
-        this.generator.out(value, type);
+        this.generator.out(value);
     }
 
     ensureHeader(type) {
@@ -206,26 +215,43 @@ export default class Listener extends BScriptListener {
     }
 
     convertValue(node) {
-        if (node.ID()) {
-            this.isVarDefined(node.ID());
+        if (node.array_id() && this.isVarDefined(node.array_id().ID())) {
+            const id = node.array_id().ID().getText();
+            const idx = node.array_id().INT().getText();
+            const { type, length } = this.variables.get(id);
 
+            this.isIndexInBound(node.array_id().INT(), length);
+
+            return {
+                isVar: true,
+                isPtr: false,
+                type,
+                value: `%${id}`,
+                config: { ...this.variables.get(id), idx }
+            };
+        }
+
+        if (node.ID() && this.isVarDefined(node.ID())) {
             const id = node.ID().getText();
             const { type } = this.variables.get(id);
 
             return {
                 isVar: true,
                 isPtr: false,
-                type: type,
-                value: `%${id}`
-            }
+                isArray: false,
+                type,
+                value: `%${id}`,
+                config: { ...this.variables.get(id) }
+            };
         }
 
         if (node.FLOAT()) {
             return {
                 isVar: false,
                 isPtr: false,
+                isArray: false,
                 type: valueTypes.FLOAT,
-                value: node.FLOAT.getText()
+                value: node.FLOAT().getText()
             };
         }
 
@@ -233,9 +259,17 @@ export default class Listener extends BScriptListener {
             return {
                 isVar: false,
                 isPtr: false,
+                isArray: false,
                 type: valueTypes.INT,
                 value: node.INT().getText()
             };
+        }
+
+        return {
+            isVar: NaN,
+            isPtr: NaN,
+            type: NaN,
+            value: NaN
         }
     }
 }
