@@ -2,13 +2,22 @@
 
 grammar BScript;
 
-start : (stat? NEWLINE)* EOF ;
+start : 
+    definition function_definitions main EOF ;
+
+definitions: (define? NEWLINE)* ;
+
+function_definitions: (define_function? NEWLINE)* ;
+
+main: (stat? NEWLINE)* ; 
 
 // Statement list
 stat: define
     | out 
     | input 
     | set ;
+
+define_function : 'placeholder' ;
 
 // Statememnts
 define : definition ID ;
