@@ -3,7 +3,7 @@
 grammar BScript;
 
 start : 
-    definition function_definitions main EOF ;
+    definitions function_definitions main EOF ;
 
 definitions: (define? NEWLINE)* ;
 

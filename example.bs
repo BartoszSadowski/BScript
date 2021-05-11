@@ -1,5 +1,5 @@
-[(C)] <3> x
 [(R)] <2> y
+[(C)] <3> x
 
 wczytaj x[2]
 wczytaj y[1]
