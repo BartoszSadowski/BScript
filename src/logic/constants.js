@@ -14,3 +14,8 @@ export const valueTypes = {
     FLOAT: 'float',
     DOUBLE: 'double'
 }
+
+export const scopeTypes = {
+    GLOBAL: 'global',
+    MAIN: 'main'
+}

@@ -3,7 +3,8 @@ import BScriptListener from '../grammar/antlrResult/BScriptListener.js';
 import Generator from './generator.js';
 import {
     headerTypes,
-    valueTypes
+    valueTypes,
+    scopeTypes
 } from './constants.js';
 
 const missing = '<missing undefined>';
@@ -15,6 +16,7 @@ export default class Listener extends BScriptListener {
         this.variables = new Map();
         this.headers = new Set();
         this.errors = [];
+        this.scope = scopeTypes.GLOBAL;
     }
 
     exitStart(ctx) {
@@ -26,9 +28,16 @@ export default class Listener extends BScriptListener {
         this.errors.forEach(error => console.error(error));
     }
 
+    exitDefinitions(ctx) {
+        this.scope = scopeTypes.MAIN;
+    }
+
     exitDefine(ctx) {
         const ID = ctx.ID().getText();
-        if (this.variables.has(ID)) {
+        if (
+            this.variables.has(ID)
+            && this.variables.get(ID).scope === this.scope
+        ) {
             const symbol = ctx.ID().symbol;
             this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${ID}, została wcześniej zadeklarowana.`);
             return;
@@ -37,6 +46,7 @@ export default class Listener extends BScriptListener {
         const config = this.determineDefinitionType(ctx.definition());
 
         this.variables.set(ID, config);
+       
         this.generator.declare(ID, config);
     }
 
@@ -44,14 +54,16 @@ export default class Listener extends BScriptListener {
         if (node.FLOAT_DEF && node.FLOAT_DEF()) {
             return {
                 type: valueTypes.FLOAT,
-                isArray: false
+                isArray: false,
+                scope: this.scope
             };
         }
 
         if (node.INT_DEF && node.INT_DEF()) {
             return {
                 type: valueTypes.INT,
-                isArray: false
+                isArray: false,
+                scope: this.scope
             };
         }
 
@@ -66,20 +78,26 @@ export default class Listener extends BScriptListener {
             return {
                 ...this.determineDefinitionType(node.array_def()),
                 isArray: true,
-                length: node.array_def().INT().getText()
+                length: node.array_def().INT().getText(),
+                scope: this.scope
             };
         }
     }
 
     isVarDefined(ID) {
         const id = ID.getText ? ID.getText() : ID.text;
-        if (!this.variables.has(id)) {
-            const symbol = ID.symbol || ID;
-            this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
-            return false;
+        if (
+            this.variables.has(id)
+            && (this.variables.get(id).scope === scopeTypes.GLOBAL
+            || this.variables.get(id).scope === this.scope)
+        ) {
+            return true;
         }
 
-        return true;
+        const symbol = ID.symbol || ID;
+        this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
+        return false;
+
     }
 
     isIndexInBound(INT, length) {
@@ -275,7 +293,8 @@ export default class Listener extends BScriptListener {
             isVar: NaN,
             isPtr: NaN,
             type: NaN,
-            value: NaN
+            value: NaN,
+            isArray: NaN
         }
     }
 }

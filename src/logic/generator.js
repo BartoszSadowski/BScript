@@ -42,7 +42,7 @@ export default class Generator {
         }
     }
 
-    declare(id, { type, isArray, length }) {
+    declare(id, { type, isArray, length, scope }) {
         this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
     }
 
