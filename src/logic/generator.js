@@ -1,6 +1,7 @@
 import {
     headerTypes,
-    valueTypes
+    valueTypes,
+    scopeTypes
 } from './constants.js';
 import {
     typeMap,
@@ -16,7 +17,7 @@ const typeWeights = [valueTypes.FLOAT, valueTypes.INT];
 
 export default class Generator {
     constructor() {
-        this.headerVariables = '';
+        this.globalVariables = '';
         this.mainText = '';
         this.declarationsText = '';
         this.reg = 0;
@@ -26,16 +27,16 @@ export default class Generator {
     addHeader(type) {
         switch(type) {
         case headerTypes.INPUT.FLOAT:
-            this.headerVariables += '@.strinfloat = private unnamed_addr constant [3 x i8] c"%f\\00"\n';
+            this.globalVariables += '@.strinfloat = private unnamed_addr constant [3 x i8] c"%f\\00"\n';
             break;
         case headerTypes.INPUT.INT:
-            this.headerVariables += '@.strinint = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
+            this.globalVariables += '@.strinint = private unnamed_addr constant [3 x i8] c"%d\\00"\n';
             break;
         case headerTypes.OUTPUT.FLOAT:
-            this.headerVariables += '@.stroutfloat = private unnamed_addr constant [4 x i8] c"%f\\0A\\00"\n';
+            this.globalVariables += '@.stroutfloat = private unnamed_addr constant [4 x i8] c"%f\\0A\\00"\n';
             break;
         case headerTypes.OUTPUT.INT:
-            this.headerVariables += '@.stroutint = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
+            this.globalVariables += '@.stroutint = private unnamed_addr constant [4 x i8] c"%d\\0A\\00"\n';
             break;
         default:
             break;
@@ -43,7 +44,11 @@ export default class Generator {
     }
 
     declare(id, { type, isArray, length, scope }) {
-        this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
+        if (scope === scopeTypes.GLOBAL) {
+            this.globalVariables += `@${id} = common global ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `] zeroinitializer` : ''}\n`;
+        } else {
+            this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
+        }
     }
 
     typeToWeight(type) {
@@ -201,7 +206,7 @@ export default class Generator {
 
     generate() {
         let text = '';
-        text += this.headerVariables;
+        text += this.globalVariables;
         text += 'declare i32 @scanf(i8*, ...)\n';
         text += 'declare i32 @printf(i8*, ...)\n';
         text += 'define i32 @main() {\n';
