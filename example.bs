@@ -4,8 +4,6 @@
 wczytaj x[2]
 wczytaj y[1]
 
-(C) z
-
 wypisz  x[2] + y[1] * 2
 
 wypisz (x[2] + y[1]) * 2

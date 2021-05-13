@@ -128,9 +128,11 @@ export default class Listener extends BScriptListener {
                 break;
             }
     
+            const varConfig = this.variables.get(id);
+
             this.generator.scanf({
-                value: `%${id}`,
-                config: { ...this.variables.get(id), idx }
+                value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
+                config: { ...varConfig, idx }
             }, type);
         }
     }
@@ -145,10 +147,12 @@ export default class Listener extends BScriptListener {
 
         if (this.isVarDefined(ID)) {
             const value = this.convertExpresion(ctx.expr());
+
+            const varConfig = this.variables.get(id);
     
             this.generator.set({
-                value: `%${id}`,
-                config: { ...this.variables.get(id), idx }
+                value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
+                config: { ...varConfig, idx }
             }, value);
         }
     }
@@ -246,12 +250,14 @@ export default class Listener extends BScriptListener {
 
             this.isIndexInBound(node.array_id().INT(), length);
 
+            const varConfig = this.variables.get(id);
+
             return {
                 isVar: true,
                 isPtr: false,
                 type,
-                value: `%${id}`,
-                config: { ...this.variables.get(id), idx }
+                value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
+                config: { ...varConfig, idx }
             };
         }
 
@@ -259,13 +265,15 @@ export default class Listener extends BScriptListener {
             const id = node.ID().getText();
             const { type } = this.variables.get(id);
 
+            const varConfig = this.variables.get(id);
+
             return {
                 isVar: true,
                 isPtr: false,
                 isArray: false,
                 type,
-                value: `%${id}`,
-                config: { ...this.variables.get(id) }
+                value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
+                config: { ...varConfig }
             };
         }
 
