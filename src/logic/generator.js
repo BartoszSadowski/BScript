@@ -22,6 +22,7 @@ export default class Generator {
         this.declarationsText = '';
         this.reg = 0;
         this.calls = 0;
+        this.functions = new Map();
     }
 
     addHeader(type) {
@@ -49,6 +50,23 @@ export default class Generator {
         } else {
             this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
         }
+    }
+
+    declareFunction(id, { type }, args) {
+        this.functions.set(id, {
+            reg: 0,
+            calls: 0,
+            entryText: [
+                `define ${typeMap[type]} @${id}(`,
+                ...args.map(arg => `${typeMap[arg.config.type]} ${arg.id}`).join(', '),
+                `) {\n`,
+                'entry:\n'
+            ],
+            bodyText: [],
+            closingText: [
+                '}\n'
+            ]
+        });
     }
 
     typeToWeight(type) {
@@ -209,6 +227,15 @@ export default class Generator {
         text += this.globalVariables;
         text += 'declare i32 @scanf(i8*, ...)\n';
         text += 'declare i32 @printf(i8*, ...)\n';
+        this.functions
+            .forEach(value => {
+                value.entryText
+                    .forEach(str => text += str);
+                value.bodyText
+                    .forEach(str => text += str);
+                value.closingText
+                    .forEach(str => text += str);
+            });
         text += 'define i32 @main() {\n';
         text += 'entry: \n';
         text += this.declarationsText;

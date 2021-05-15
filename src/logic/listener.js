@@ -18,7 +18,6 @@ export default class Listener extends BScriptListener {
         this.scope = scopeTypes.GLOBAL;
         this.variables = new Map();
         this.variables.set(scopeTypes.GLOBAL, new Map());
-        this.variables.set(scopeTypes.MAIN, new Map());
         this.currentScopeVariables = this.variables.get(this.scope);
     }
 
@@ -32,12 +31,55 @@ export default class Listener extends BScriptListener {
     }
 
     exitDefinitions(ctx) {
-        this.scope = scopeTypes.MAIN;
+        this.changeScope(scopeTypes.MAIN);
+    }
+
+    changeScope(name) {
+        this.scope = name;
+
+        if(!this.variables.get(name)) {
+            this.variables.set(name, new Map());
+        }
+
         this.currentScopeVariables = this.variables.get(this.scope);
     }
 
     exitDefine_function(ctx) {
         const ID = ctx.ID().getText();
+        
+        if (
+            this.currentScopeVariables.has(ID)
+        ) {
+            const symbol = ctx.ID().symbol;
+            this.errors.push(`Linia ${symbol.line}:${symbol.column} funkcja lub zmienna ${ID} już zadeklarowana.`);
+            return;
+        }
+
+        this.changeScope(ID);
+
+        const config = { ...this.determineDefinitionType(ctx), isFunction: true };
+
+        this.currentScopeVariables.set(ID, config);
+
+        const args = this.retrieveArguments(ctx);
+
+        this.generator.declareFunction(ID, config, args);
+
+        this.changeScope(scopeTypes.MAIN);
+    }
+    
+    retrieveArguments(node) {
+        const args1 = node.function_args()
+            .map(arg => ({
+                id: arg.ID().getText(),
+                config: this.determineDefinitionType(arg)
+            }));
+
+        if(node.function_args()[0]) {
+            return [...args1, ...this.retrieveArguments(node.function_args()[0])]
+        } else {
+            return [];
+        }
     }
 
     exitDefine(ctx) {
@@ -62,7 +104,8 @@ export default class Listener extends BScriptListener {
             return {
                 type: valueTypes.FLOAT,
                 isArray: false,
-                scope: this.scope
+                scope: this.scope,
+                isFunction: false
             };
         }
 
@@ -70,7 +113,8 @@ export default class Listener extends BScriptListener {
             return {
                 type: valueTypes.INT,
                 isArray: false,
-                scope: this.scope
+                scope: this.scope,
+                isFunction: false
             };
         }
 
@@ -86,7 +130,8 @@ export default class Listener extends BScriptListener {
                 ...this.determineDefinitionType(node.array_def()),
                 isArray: true,
                 length: node.array_def().INT().getText(),
-                scope: this.scope
+                scope: this.scope,
+                isFunction: false
             };
         }
     }
