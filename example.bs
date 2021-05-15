@@ -1,6 +1,10 @@
 [(R)] <2> y
 [(C)] <3> x
 
+funkcja (R) x [(C) y, (R) z]
+
+zwraca x
+
 wczytaj x[2]
 wczytaj y[1]
 

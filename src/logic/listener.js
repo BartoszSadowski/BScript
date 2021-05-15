@@ -13,10 +13,13 @@ export default class Listener extends BScriptListener {
     constructor() {
         super();
         this.generator = new Generator();
-        this.variables = new Map();
         this.headers = new Set();
         this.errors = [];
         this.scope = scopeTypes.GLOBAL;
+        this.variables = new Map();
+        this.variables.set(scopeTypes.GLOBAL, new Map());
+        this.variables.set(scopeTypes.MAIN, new Map());
+        this.currentScopeVariables = this.variables.get(this.scope);
     }
 
     exitStart(ctx) {
@@ -30,13 +33,17 @@ export default class Listener extends BScriptListener {
 
     exitDefinitions(ctx) {
         this.scope = scopeTypes.MAIN;
+        this.currentScopeVariables = this.variables.get(this.scope);
+    }
+
+    exitDefine_function(ctx) {
+        const ID = ctx.ID().getText();
     }
 
     exitDefine(ctx) {
         const ID = ctx.ID().getText();
         if (
-            this.variables.has(ID)
-            && this.variables.get(ID).scope === this.scope
+            this.currentScopeVariables.has(ID)
         ) {
             const symbol = ctx.ID().symbol;
             this.errors.push(`Linia ${symbol.line}:${symbol.column} zmienna o nazwie ${ID}, została wcześniej zadeklarowana.`);
@@ -45,7 +52,7 @@ export default class Listener extends BScriptListener {
 
         const config = this.determineDefinitionType(ctx.definition());
 
-        this.variables.set(ID, config);
+        this.currentScopeVariables.set(ID, config);
        
         this.generator.declare(ID, config);
     }
@@ -87,9 +94,8 @@ export default class Listener extends BScriptListener {
     isVarDefined(ID) {
         const id = ID.getText ? ID.getText() : ID.text;
         if (
-            this.variables.has(id)
-            && (this.variables.get(id).scope === scopeTypes.GLOBAL
-            || this.variables.get(id).scope === this.scope)
+            this.currentScopeVariables.has(id)
+            || this.variables.get(scopeTypes.GLOBAL).has(id)
         ) {
             return true;
         }
@@ -107,6 +113,24 @@ export default class Listener extends BScriptListener {
         }
     }
 
+    getVariable(id) {
+        if (this.currentScopeVariables.has(id)) {
+            return this.currentScopeVariables.get(id);
+        }
+
+        if (this.variables.get(scopeTypes.GLOBAL).has(id)) {
+            return this.variables.get(scopeTypes.GLOBAL).get(id);
+        }
+
+        this.errors.push(`Zmienna o nazwie ${id}, nie została wcześniej zadeklarowana.`);
+
+        return {
+            type: NaN,
+            isArray: NaN,
+            scope: NaN
+        };
+    }
+
     exitInput(ctx) {
         const {
             ID,
@@ -115,7 +139,7 @@ export default class Listener extends BScriptListener {
         const id = ID.getText();
 
         if (this.isVarDefined(ID)) {
-            const { type } = this.variables.get(id);
+            const { type } = this.getVariable(id);
 
             switch(type) {
             case valueTypes.INT:
@@ -128,7 +152,7 @@ export default class Listener extends BScriptListener {
                 break;
             }
     
-            const varConfig = this.variables.get(id);
+            const varConfig = this.getVariable(id);
 
             this.generator.scanf({
                 value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
@@ -148,7 +172,7 @@ export default class Listener extends BScriptListener {
         if (this.isVarDefined(ID)) {
             const value = this.convertExpresion(ctx.expr());
 
-            const varConfig = this.variables.get(id);
+            const varConfig = this.getVariable(id);
     
             this.generator.set({
                 value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
@@ -168,7 +192,7 @@ export default class Listener extends BScriptListener {
             const ID = node.array_id().ID();
             const idx = node.array_id().INT().getText();
 
-            this.isIndexInBound(node.array_id().INT(), this.variables.get(ID.getText()).length);
+            this.isIndexInBound(node.array_id().INT(), this.getVariable(ID.getText()).length);
 
             if (idx === missing) {
                 const symbol = node.array_id().INT().symbol;
@@ -246,11 +270,11 @@ export default class Listener extends BScriptListener {
         if (node.array_id() && this.isVarDefined(node.array_id().ID())) {
             const id = node.array_id().ID().getText();
             const idx = node.array_id().INT().getText();
-            const { type, length } = this.variables.get(id);
+            const { type, length } = this.getVariable(id);
 
             this.isIndexInBound(node.array_id().INT(), length);
 
-            const varConfig = this.variables.get(id);
+            const varConfig = this.getVariable(id);
 
             return {
                 isVar: true,
@@ -263,9 +287,9 @@ export default class Listener extends BScriptListener {
 
         if (node.ID() && this.isVarDefined(node.ID())) {
             const id = node.ID().getText();
-            const { type } = this.variables.get(id);
+            const { type } = this.getVariable(id);
 
-            const varConfig = this.variables.get(id);
+            const varConfig = this.getVariable(id);
 
             return {
                 isVar: true,
