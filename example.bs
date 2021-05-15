@@ -1,7 +1,7 @@
 [(R)] <2> y
 [(C)] <3> x
 
-funkcja (R) z [(C) y, (R) z, (C) w]
+funkcja (R) z [(C) y, (C) w]
 
 zwraca x
 

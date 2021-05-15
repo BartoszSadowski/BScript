@@ -69,11 +69,23 @@ export default class Listener extends BScriptListener {
     }
     
     retrieveArguments(node) {
+        
+
         const args1 = node.function_args()
-            .map(arg => ({
-                id: arg.ID().getText(),
-                config: this.determineDefinitionType(arg)
-            }));
+            .map(arg => {
+                const id = arg.ID().getText()
+                if (
+                    this.currentScopeVariables.has(id)
+                ) {
+                    const symbol = arg.ID().symbol;
+                    this.errors.push(`Linia ${symbol.line}:${symbol.column} parametr ${id} nie posiada unikalnej nazwy.`);
+                }
+
+                return {
+                    id,
+                    config: this.determineDefinitionType(arg)
+                };
+            });
 
         if(node.function_args()[0]) {
             return [...args1, ...this.retrieveArguments(node.function_args()[0])]
