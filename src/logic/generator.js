@@ -83,6 +83,33 @@ export default class Generator {
         funct.bodyText.push(`ret ${typeMap[funct.type]} ${value}\n`);
     }
 
+    callFunction(functionID, args, funArgs, scope) {
+        const { type } = this.functions.get(functionID);
+
+        const mapedArgs = args
+            .map((arg, i) => {
+                return this.castType(arg, funArgs[i][1].type, scopeTypes.MAIN);
+            });
+
+        let call;
+        if (scope === scopeTypes.MAIN) {
+            call = `%call${this.calls++}`;
+            this.mainText += `${call} = call ${typeMap[type]} @${functionID}(`
+            this.mainText += mapedArgs.map(arg => `${typeMap[arg.type]} ${arg.value}`).join(', ');
+            this.mainText += ')\n';
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            call = `%call${funct.calls++}`;
+            functText.push(`${call} = call ${typeMap[type]} @${functionID}(`);
+            functText.push(mapedArgs.map(arg => `${typeMap[arg.type]} ${arg.value}`).join(', '));
+            functText.push(')\n');
+        }
+
+        return call;
+    }
+
     typeToWeight(type) {
         return typeWeights.findIndex(t => t === type);
     }
@@ -145,7 +172,6 @@ export default class Generator {
             functText.push(`${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`);
         }
 
-
         return {
             isPtr: true,
             value: conv,
@@ -155,6 +181,9 @@ export default class Generator {
 
     loadValue(val, scope) {
         let reg;
+
+        console.log(val);
+
         const value = this.getArrayPtr(val, scope);
 
         if (scope === scopeTypes.MAIN) {
@@ -190,7 +219,7 @@ export default class Generator {
 
         let value;
 
-        if (scope === scopeTypes.GLOBAL) {
+        if (scope === scopeTypes.MAIN) {
             value = `%math${this.calls++}`;
             this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
         } else {
@@ -232,7 +261,7 @@ export default class Generator {
     scanf(id, type, scope) {
         const ptr = this.getArrayPtr(id, scope);
 
-        if (scope === scopeTypes.GLOBAL) {
+        if (scope === scopeTypes.MAIN) {
             this.mainText += `%call${this.calls++} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`;
         } else {
             const funct = this.functions.get(scope);
@@ -248,7 +277,7 @@ export default class Generator {
 
         if (id.config.isArray) {
             let arrayidx;
-            if (scope === scopeTypes.GLOBAL) {
+            if (scope === scopeTypes.MAIN) {
                 arrayidx = `%arrayidx${this.calls++}`;
                 this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`;
             } else {
@@ -269,7 +298,7 @@ export default class Generator {
 
         const entryPtr = this.getArrayPtr(id, scope);
 
-        if (scope === scopeTypes.GLOBAL) {
+        if (scope === scopeTypes.MAIN) {
             this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
         } else {
             const functText = this.functions.get(scope).bodyText;

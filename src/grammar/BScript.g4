@@ -22,6 +22,9 @@ define_function : 'funkcja' type=(INT_DEF | FLOAT_DEF) ID '[' (function_args)* '
 function_args : (type=(INT_DEF | FLOAT_DEF) ID) (',' function_args)*
                 | type=(INT_DEF | FLOAT_DEF) ID ;
 
+args : value (',' args)*
+    | value ;
+
 // Statememnts
 define : definition ID ;
 
@@ -41,6 +44,7 @@ expr: expr op=(MUL | DIV) expr
 
 // Possible values
 value : array_id
+    | function_call
     | ID
     | INT
     | FLOAT ;
@@ -71,6 +75,7 @@ CL_BRACKETS : ')' ;
 
 // variable name
 array_id : ID '[' INT ']' ;
+function_call : ID '(' (args)* ')' ;
 ID : [a-zA-Z][a-zA-Z]* ;
 
 // data types

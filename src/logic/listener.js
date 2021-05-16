@@ -32,10 +32,6 @@ export default class Listener extends BScriptListener {
         this.errors.forEach(error => console.error(error));
     }
 
-    exitDefinitions(ctx) {
-        this.changeScope(scopeTypes.MAIN);
-    }
-
     changeScope(name) {
         this.scope = name;
 
@@ -57,11 +53,11 @@ export default class Listener extends BScriptListener {
             return;
         }
 
-        this.changeScope(ID);
-
         const config = { ...this.determineDefinitionType(ctx), isFunction: true };
 
         this.currentScopeVariables.set(ID, config);
+
+        this.changeScope(ID);
 
         const args = this.retrieveArguments(ctx);
 
@@ -90,6 +86,10 @@ export default class Listener extends BScriptListener {
 
         this.generator.setRetVal(this.convertExpresion(ctx.expr()), this.scope);
 
+        this.changeScope(scopeTypes.GLOBAL);
+    }
+
+    exitFunction_definitions(ctx) {
         this.changeScope(scopeTypes.MAIN);
     }
     
@@ -456,12 +456,82 @@ export default class Listener extends BScriptListener {
             };
         }
 
+        if (node.function_call()) {
+            const functionID = node.function_call().ID().getText();
+
+            const functionArgs = this.retrieveFunctionArguments(node.function_call());
+
+            if(!this.variables.has(functionID)) {
+                const symbol = node.function_call().ID().symbol;
+                this.errors.push(`Linia ${symbol.line}:${symbol.column} funkcja ${functionID} nie została zadeklarowana.`);
+                
+                return {
+                    isVar: NaN,
+                    isPtr: NaN,
+                    type: NaN,
+                    value: NaN,
+                    isArray: NaN,
+                    config: {
+                        isArray: NaN
+                    }
+                };
+            }
+
+            const functionScope = this.variables.get(functionID);
+            
+            const functionsArgs = [...functionScope].filter(([k, v]) => v.isArg);
+
+            if (functionsArgs.length !== functionArgs.length) {
+                const symbol = node.function_call().ID().symbol;
+                this.errors.push(`Linia ${symbol.line}:${symbol.column} funkcja ${functionID} posiada ${functionsArgs.length} argumentów, wywołana z ${functionArgs.length} argumentami.`);
+                
+                return {
+                    isVar: NaN,
+                    isPtr: NaN,
+                    type: NaN,
+                    value: NaN,
+                    isArray: NaN,
+                    config: {
+                        isArray: NaN
+                    }
+                };
+            }
+
+            const { type } = this.variables.get(scopeTypes.GLOBAL).get(functionID);
+            const value = this.generator.callFunction(functionID, functionArgs, functionsArgs, this.scope);
+
+            return {
+                isVar: false,
+                isPtr: false,
+                isArray: false,
+                type,
+                value
+            };
+        }
+
         return {
             isVar: NaN,
             isPtr: NaN,
             type: NaN,
             value: NaN,
-            isArray: NaN
+            isArray: NaN,
+            config: {
+                isArray: NaN
+            }
+        }
+    }
+
+    retrieveFunctionArguments(node) {
+        const args1 = node.args()
+            .map(arg => {
+                return this.convertValue(arg.value());
+            });
+
+
+        if(node.args()[0]) {
+            return [...args1, ...this.retrieveFunctionArguments(node.args()[0])];
+        } else {
+            return [];
         }
     }
 }

@@ -14,3 +14,10 @@ funkcja (C) xz []
     wypisz q
 zwraca q
 
+(R) beka
+beka = 10
+
+x[0] = z(beka, 1)
+
+wypisz x[0]
+
