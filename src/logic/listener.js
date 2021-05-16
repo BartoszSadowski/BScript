@@ -4,7 +4,8 @@ import Generator from './generator.js';
 import {
     headerTypes,
     valueTypes,
-    scopeTypes
+    scopeTypes,
+    actionTypes
 } from './constants.js';
 
 const missing = '<missing undefined>';
@@ -19,6 +20,7 @@ export default class Listener extends BScriptListener {
         this.variables = new Map();
         this.variables.set(scopeTypes.GLOBAL, new Map());
         this.currentScopeVariables = this.variables.get(this.scope);
+        this.callStack = [];
     }
 
     exitStart(ctx) {
@@ -65,12 +67,21 @@ export default class Listener extends BScriptListener {
 
         this.generator.declareFunction(ID, config, args);
 
+        console.log(this.callStack[0].ctx.getText());
+        this.callStack.forEach(({ type, ctx }) => {
+            switch(type) {
+            case actionTypes.DEFINE:
+                this.exitDefine(ctx, true);
+                break;
+            default:
+                break;
+            }
+        });
+
         this.changeScope(scopeTypes.MAIN);
     }
     
     retrieveArguments(node) {
-        
-
         const args1 = node.function_args()
             .map(arg => {
                 const id = arg.ID().getText()
@@ -80,10 +91,14 @@ export default class Listener extends BScriptListener {
                     const symbol = arg.ID().symbol;
                     this.errors.push(`Linia ${symbol.line}:${symbol.column} parametr ${id} nie posiada unikalnej nazwy.`);
                 }
+                
+                const config = this.determineDefinitionType(arg);
+
+                this.currentScopeVariables.set(id, config);
 
                 return {
                     id,
-                    config: this.determineDefinitionType(arg)
+                    config
                 };
             });
 
@@ -94,7 +109,19 @@ export default class Listener extends BScriptListener {
         }
     }
 
-    exitDefine(ctx) {
+    exitDefine(ctx, pass) {
+        if (
+            !ctx.parentCtx.parentCtx.definitions
+            && !ctx.parentCtx.parentCtx.parentCtx.definitions
+            && !pass
+        ) {
+            this.callStack.push({
+                type: actionTypes.DEFINE,
+                ctx
+            })
+            return;
+        }
+
         const ID = ctx.ID().getText();
         if (
             this.currentScopeVariables.has(ID)

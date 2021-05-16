@@ -17,16 +17,10 @@ stat: define
     | input 
     | set ;
 
-define_function : 'funkcja' type=(INT_DEF | FLOAT_DEF) ID '[' (function_args)* ']' NEWLINE body 'zwraca' value ;
+define_function : 'funkcja' type=(INT_DEF | FLOAT_DEF) ID '[' (function_args)* ']' NEWLINE main 'zwraca' value ;
 
 function_args : (type=(INT_DEF | FLOAT_DEF) ID) (',' function_args)*
                 | type=(INT_DEF | FLOAT_DEF) ID ;
-
-body: (body_stat? NEWLINE)* ;
-
-body_stat: out
-    | input
-    | set ;
 
 // Statememnts
 define : definition ID ;

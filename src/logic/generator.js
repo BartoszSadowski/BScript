@@ -47,8 +47,11 @@ export default class Generator {
     declare(id, { type, isArray, length, scope }) {
         if (scope === scopeTypes.GLOBAL) {
             this.globalVariables += `@${id} = common global ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `] zeroinitializer` : ''}\n`;
-        } else {
+        } else if (scope === scopeTypes.MAIN) {
             this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
+        } else {
+            this.functions.get(scope).entryText
+                .push(`%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`);
         }
     }
 
@@ -58,12 +61,15 @@ export default class Generator {
             calls: 0,
             entryText: [
                 `define ${typeMap[type]} @${id}(`,
-                ...args.map(arg => `${typeMap[arg.config.type]} ${arg.id}`).join(', '),
+                ...args.map(arg => `${typeMap[arg.config.type]} %${arg.id}`).join(', '),
                 `) {\n`,
-                'entry:\n'
+                'entry:\n',
+                ...args.map(arg => `%${arg.id}.addr = alloca ${typeMap[arg.config.type]}\n`).join(''),
+                ...args.map(arg => `store ${typeMap[arg.config.type]} %${arg.id}, ${typeMap[arg.config.type]}* %${arg.id}.addr\n`)
             ],
             bodyText: [],
             closingText: [
+                'ret i32 0\n',
                 '}\n'
             ]
         });

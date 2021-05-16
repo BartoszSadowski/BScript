@@ -19,3 +19,10 @@ export const scopeTypes = {
     GLOBAL: 'global',
     MAIN: 'main'
 }
+
+export const actionTypes = {
+    DEFINE: 'define',
+    OUT: 'out',
+    IN: 'in',
+    SET: 'set'
+}
