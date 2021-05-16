@@ -47,7 +47,7 @@ export default class Generator {
 
     declare(id, { type, isArray, length, scope }) {
         if (scope === scopeTypes.GLOBAL) {
-            this.globalVariables += `@${id} = common global ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `] zeroinitializer` : ''}\n`;
+            this.globalVariables += `@${id} = common global ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `] zeroinitializer` : ` ${type==='int' ? '0' : '0.0'}`}\n`;
         } else if (scope === scopeTypes.MAIN) {
             this.declarationsText += `%${id} = alloca ${isArray ? `[${length} x ` : ''}${typeMap[type]}${isArray ? `]` : ''}\n`;
         } else {
@@ -108,7 +108,16 @@ export default class Generator {
             functText.push(')\n');
         }
 
-        return call;
+        return {
+            isPtr: true,
+            isVar: true,
+            isArray: false,
+            value: call,
+            type,
+            config: {
+                isArray: false
+            }
+        };;
     }
 
     typeToWeight(type) {
@@ -372,7 +381,7 @@ export default class Generator {
             label1 = `if.then.${funct.calls++}`;
             label2 = `if.end.${funct.calls++}`;
 
-            functText.push(`br i1 ${condition.value}, label ${label1}, label${label2}\n`);
+            functText.push(`br i1 ${condition.value}, label %${label1}, label %${label2}\n`);
             functText.push(`${label1}:\n`);
         }
 
@@ -404,7 +413,7 @@ export default class Generator {
             const funct = this.functions.get(scope);
             const functText = funct.bodyText;
 
-            label1 = `while.cond.${funct.calls++}`;
+            label = `while.cond.${funct.calls++}`;
 
             functText.push(`br label %${label}\n`);
             functText.push(`${label}:\n`);
@@ -428,7 +437,7 @@ export default class Generator {
             label1 = `while.body.${funct.calls++}`;
             label2 = `while.end.${funct.calls++}`;
 
-            functText.push(`br i1 ${condition.value}, label ${label1}, label${label2}\n`);
+            functText.push(`br i1 ${condition.value}, label %${label1}, label %${label2}\n`);
             functText.push(`${label1}:\n`);
         }
 

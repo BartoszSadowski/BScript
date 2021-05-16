@@ -92,7 +92,7 @@ export default class Listener extends BScriptListener {
                 this.exitCondition(ctx, stack);
                 break;
             case actionTypes.WHILE:
-                this.exitWhile(ctx, stack);
+                this.exitLoop(ctx, stack);
             default:
                 break;
             }
@@ -174,7 +174,7 @@ export default class Listener extends BScriptListener {
                     this.exitCondition(ctx, stack);
                     break;
                 case actionTypes.WHILE:
-                    this.exitWhile(ctx, stack);
+                    this.exitLoop(ctx, stack);
                 default:
                     break;
                 }
@@ -225,7 +225,7 @@ export default class Listener extends BScriptListener {
                     this.exitCondition(ctx, stack);
                     break;
                 case actionTypes.WHILE:
-                    this.exitWhile(ctx, stack);
+                    this.exitLoop(ctx, stack);
                 default:
                     break;
                 }
@@ -604,15 +604,7 @@ export default class Listener extends BScriptListener {
             }
 
             const { type } = this.variables.get(scopeTypes.GLOBAL).get(functionID);
-            const value = this.generator.callFunction(functionID, functionArgs, functionsArgs, this.scope);
-
-            return {
-                isVar: false,
-                isPtr: false,
-                isArray: false,
-                type,
-                value
-            };
+            return this.generator.callFunction(functionID, functionArgs, functionsArgs, this.scope);
         }
 
         return {

@@ -1,31 +1,35 @@
-[(R)] <2> y
-[(C)] <3> x
+(C) x
 
-funkcja (C) z [(C) y, (C) w]
-    [(R)] <2> q
-    wypisz y * w + 1
-    [(R)] <2> xyz
-    wczytaj q[0]
-    q[1] = q[0] + 1
-zwraca y
+funkcja (C) wieksza [(C) x, (C) y]
+    (C) zwrot
 
-funkcja (C) xz []
-    (C) q
-    wypisz q
-zwraca q
+    zwrot = x
 
-(R) beka
-beka = 10
+    jezeli (x < y)
+        zwrot = y
+    koniec
+zwraca zwrot
 
-dopoki (beka > 5)
-    beka = beka - 1
-koniec
+funkcja (R) kolejne [(C) dlugosc]
+    (C) i
 
-jezeli (beka < 4)
-    beka = 5
-koniec
+    i = 1
 
-x[0] = z(beka, 1)
+    dopoki (i <= dlugosc)
+        wypisz i
+        i = i + 1
+    koniec
+zwraca i+0.5
 
-wypisz x[0]
+(C) y
 
+wczytaj x
+wczytaj y
+
+wypisz wieksza(x, y)
+
+(C) z
+
+z = x + y
+
+wypisz kolejne(z)
