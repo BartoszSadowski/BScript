@@ -24,5 +24,16 @@ export const actionTypes = {
     DEFINE: 'define',
     OUT: 'out',
     IN: 'in',
-    SET: 'set'
+    SET: 'set',
+    IF: 'if',
+    WHILE: 'while'
+}
+
+export const comparisonTypes = {
+    GT: 'gt',
+    GTEQ: 'gteq',
+    EQ: 'eq',
+    NEQ: 'neq',
+    LT: 'lt',
+    LTEQ: 'lteq'
 }

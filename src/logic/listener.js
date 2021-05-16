@@ -5,7 +5,8 @@ import {
     headerTypes,
     valueTypes,
     scopeTypes,
-    actionTypes
+    actionTypes,
+    comparisonTypes
 } from './constants.js';
 
 const missing = '<missing undefined>';
@@ -73,7 +74,7 @@ export default class Listener extends BScriptListener {
 
         const stack = this.callStackCalle.pop();
 
-        this.callStack.get(stack).forEach(({ type, ctx }) => {
+        this.callStack.get(stack).forEach(({ type, ctx, stack }) => {
             switch(type) {
             case actionTypes.DEFINE:
                 this.exitDefine(ctx);
@@ -87,6 +88,11 @@ export default class Listener extends BScriptListener {
             case actionTypes.SET:
                 this.exitSet(ctx);
                 break;
+            case actionTypes.IF:
+                this.exitCondition(ctx, stack);
+                break;
+            case actionTypes.WHILE:
+                this.exitWhile(ctx, stack);
             default:
                 break;
             }
@@ -126,6 +132,55 @@ export default class Listener extends BScriptListener {
             return [...args1, ...this.retrieveArguments(node.function_args()[0])]
         } else {
             return [];
+        }
+    }
+
+    enterCondition() {
+        const id = this.callStackId++;
+        this.callStackCalle.push(id);
+        this.callStack.set(id, []);
+    }
+
+    exitCondition(ctx, callStack) {
+        const stack = callStack || this.callStackCalle.pop();
+
+        if (this.callStackCalle.length) {
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
+                type: actionTypes.IF,
+                ctx,
+                stack
+            })
+            return;
+        } else {
+            const conditionRes = this.convertCondtion(ctx.cond());
+
+            const ending = this.generator.beginIf(conditionRes, this.scope);
+
+            this.callStack.get(stack).forEach(({ type, ctx, stack }) => {
+                switch(type) {
+                case actionTypes.DEFINE:
+                    this.exitDefine(ctx);
+                    break;
+                case actionTypes.OUT:
+                    this.exitOut(ctx);
+                    break;
+                case actionTypes.IN:
+                    this.exitInput(ctx);
+                    break;
+                case actionTypes.SET:
+                    this.exitSet(ctx);
+                    break;
+                case actionTypes.IF:
+                    this.exitCondition(ctx, stack);
+                    break;
+                case actionTypes.WHILE:
+                    this.exitWhile(ctx, stack);
+                default:
+                    break;
+                }
+            });
+
+            this.generator.endIf(ending, this.scope);
         }
     }
 
@@ -533,5 +588,40 @@ export default class Listener extends BScriptListener {
         } else {
             return [];
         }
+    }
+
+    convertCondtion(node) {
+        const [statement1, statement2] = node.expr();
+        const val1 = this.convertExpresion(statement1);
+        const val2 = this.convertExpresion(statement2);
+
+        let method;
+
+
+        if(node.EQUALS()) {
+            method = comparisonTypes.EQ;
+        }
+
+        if(node.NOT_EQUALS()) {
+            method = comparisonTypes.NEQ;
+        }
+
+        if(node.GT()) {
+            method = comparisonTypes.GT;
+        }
+
+        if(node.GTEQ()) {
+            method = comparisonTypes.GTEQ;
+        }
+
+        if(node.LT()) {
+            method = comparisonTypes.LT;
+        }
+
+        if(node.LTEQ()) {
+            method = comparisonTypes.LTEQ;
+        }
+
+        return this.generator.compareValues(val1, val2, method, this.scope);
     }
 }

@@ -10,7 +10,8 @@ import {
     addMethodMap,
     subMethodMap,
     mulMethodMap,
-    divMethodMap
+    divMethodMap,
+    comparisonMaps
 } from './maps.js';
 
 const typeWeights = [valueTypes.FLOAT, valueTypes.INT];
@@ -256,6 +257,35 @@ export default class Generator {
         return this.mathOperation(val1, val2, divMethodMap, scope);
     }
 
+    compareValues(v1, v2, method, scope) {
+        const [val1, val2] = this.toCommonType(v1, v2, scope);
+        const type = val1.type;
+
+        let value;
+
+        if (scope === scopeTypes.MAIN) {
+            value = `%cmp${this.calls++}`;
+            this.mainText += `${value} = ${comparisonMaps[method][type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            value = `%cmp${funct.calls++}`;
+            functText.push(`${value} = ${comparisonMaps[method][type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`);
+        }
+
+        return {
+            isPtr: true,
+            isVar: true,
+            isArray: false,
+            value,
+            type,
+            config: {
+                isArray: false
+            }
+        };
+    }
+
     scanf(id, type, scope) {
         const ptr = this.getArrayPtr(id, scope);
 
@@ -325,8 +355,41 @@ export default class Generator {
             functText.push(`%call${funct.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`);
             funct.calls++;
         }
+    }
 
+    beginIf(condition, scope) {
+        let label1;
+        let label2;
+        if (scope === scopeTypes.MAIN) {
+            label1 = `if.then.${this.calls++}`;
+            label2 = `if.end.${this.calls++}`;
+            this.mainText += `br i1 ${condition.value}, label %${label1}, label %${label2}\n`;
+            this.mainText += `${label1}:\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
 
+            label1 = `if.then.${funct.calls++}`;
+            label2 = `if.end.${funct.calls++}`;
+
+            functText.push(`br i1 ${condition.value}, label ${label1}, label${label2}\n`);
+            functText.push(`${label1}:\n`);
+        }
+
+        return label2;
+    }
+
+    endIf(ending, scope) {
+        if (scope === scopeTypes.MAIN) {
+            this.mainText += `br label %${ending}\n`;
+            this.mainText += `${ending}:\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            functText.push(`br label %${ending}\n`);
+            functText.push(`${ending}:\n`);
+        }
     }
 
     generate() {

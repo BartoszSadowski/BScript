@@ -1,5 +1,6 @@
 import {
-    valueTypes
+    valueTypes,
+    comparisonTypes
 } from './constants.js';
 
 export const typeMap = {
@@ -36,4 +37,31 @@ export const mulMethodMap = {
 export const divMethodMap = {
     [valueTypes.FLOAT]: 'fdiv',
     [valueTypes.INT]: 'sdiv'
+}
+
+export const comparisonMaps = {
+    [comparisonTypes.EQ]: {
+        [valueTypes.FLOAT]: 'fcmp oeq',
+        [valueTypes.INT]: 'icmp eq'
+    },
+    [comparisonTypes.NEQ]: {
+        [valueTypes.FLOAT]: 'fcmp une',
+        [valueTypes.INT]: 'icmp neq'
+    },
+    [comparisonTypes.GT]: {
+        [valueTypes.FLOAT]: 'fcmp ogt',
+        [valueTypes.INT]: 'icmp sgt'
+    },
+    [comparisonTypes.GTEQ]: {
+        [valueTypes.FLOAT]: 'fcmp oge',
+        [valueTypes.INT]: 'icmp sge'
+    },
+    [comparisonTypes.LT]: {
+        [valueTypes.FLOAT]: 'fcmp olt',
+        [valueTypes.INT]: 'icmp slt'
+    },
+    [comparisonTypes.LTEQ]: {
+        [valueTypes.FLOAT]: 'fcmp ole',
+        [valueTypes.INT]: 'icmp sle'
+    }
 }

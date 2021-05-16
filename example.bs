@@ -21,8 +21,8 @@ dopoki (beka > 5)
     beka = beka - 1
 koniec
 
-jezeli (beka > 4)
-    beka = 4
+jezeli (beka < 4)
+    beka = 5
 koniec
 
 x[0] = z(beka, 1)
