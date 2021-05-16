@@ -74,6 +74,10 @@ export default class Listener extends BScriptListener {
                 break;
             case actionTypes.OUT:
                 this.exitOut(ctx, true);
+                break;
+            case actionTypes.IN:
+                this.exitInput(ctx, true);
+                break;
             default:
                 break;
             }
@@ -93,7 +97,7 @@ export default class Listener extends BScriptListener {
                     this.errors.push(`Linia ${symbol.line}:${symbol.column} parametr ${id} nie posiada unikalnej nazwy.`);
                 }
                 
-                const config = this.determineDefinitionType(arg);
+                const config = this.determineDefinitionType(arg, true);
 
                 this.currentScopeVariables.set(id, config);
 
@@ -139,13 +143,16 @@ export default class Listener extends BScriptListener {
         this.generator.declare(ID, config);
     }
 
-    determineDefinitionType(node) {
+    determineDefinitionType(node, arg) {
+        const isArg = arg ? true : false;
+
         if (node.FLOAT_DEF && node.FLOAT_DEF()) {
             return {
                 type: valueTypes.FLOAT,
                 isArray: false,
                 scope: this.scope,
-                isFunction: false
+                isFunction: false,
+                isArg
             };
         }
 
@@ -154,7 +161,8 @@ export default class Listener extends BScriptListener {
                 type: valueTypes.INT,
                 isArray: false,
                 scope: this.scope,
-                isFunction: false
+                isFunction: false,
+                isArg
             };
         }
 
@@ -171,7 +179,8 @@ export default class Listener extends BScriptListener {
                 isArray: true,
                 length: node.array_def().INT().getText(),
                 scope: this.scope,
-                isFunction: false
+                isFunction: false,
+                isArg
             };
         }
     }
@@ -216,7 +225,19 @@ export default class Listener extends BScriptListener {
         };
     }
 
-    exitInput(ctx) {
+    exitInput(ctx, pass) {
+        if (
+            !ctx.parentCtx.parentCtx.definitions
+            && !ctx.parentCtx.parentCtx.parentCtx.definitions
+            && !pass
+        ) {
+            this.callStack.push({
+                type: actionTypes.IN,
+                ctx
+            })
+            return;
+        }
+
         const {
             ID,
             idx
@@ -242,7 +263,7 @@ export default class Listener extends BScriptListener {
             this.generator.scanf({
                 value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
                 config: { ...varConfig, idx }
-            }, type);
+            }, type, this.scope);
         }
     }
 
@@ -289,8 +310,6 @@ export default class Listener extends BScriptListener {
                 idx
             };
         }
-
-
     }
 
     exitOut(ctx, pass) {

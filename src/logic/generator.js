@@ -157,7 +157,7 @@ export default class Generator {
             const functText = funct.entryText;
 
             reg = val.isPtr ? val.value : `%${funct.reg++}`;
-            functText.push(val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`);
+            functText.push(val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}${val.config.isArg ? '.addr' : ''}\n`);
         }
 
         return {
@@ -221,11 +221,18 @@ export default class Generator {
         return this.mathOperation(val1, val2, divMethodMap, scope);
     }
 
-    scanf(id, type) {
-        const ptr = this.getArrayPtr(id);
+    scanf(id, type, scope) {
+        const ptr = this.getArrayPtr(id, scope);
 
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`;
-        this.calls++;
+        if (scope === scopeTypes.GLOBAL) {
+            this.mainText += `%call${this.calls++} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.entryText;
+
+            functText.push(`%call${funct.calls++} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`);
+        }
+
     }
 
     getArrayPtr(id, scope) {
