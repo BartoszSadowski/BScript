@@ -17,6 +17,14 @@ zwraca q
 (R) beka
 beka = 10
 
+dopoki (beka > 5)
+    beka = beka - 1
+koniec
+
+jezeli (beka > 4)
+    beka = 4
+koniec
+
 x[0] = z(beka, 1)
 
 wypisz x[0]

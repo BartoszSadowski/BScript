@@ -182,8 +182,6 @@ export default class Generator {
     loadValue(val, scope) {
         let reg;
 
-        console.log(val);
-
         const value = this.getArrayPtr(val, scope);
 
         if (scope === scopeTypes.MAIN) {

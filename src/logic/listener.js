@@ -20,7 +20,9 @@ export default class Listener extends BScriptListener {
         this.variables = new Map();
         this.variables.set(scopeTypes.GLOBAL, new Map());
         this.currentScopeVariables = this.variables.get(this.scope);
-        this.callStack = [];
+        this.callStack = new Map();
+        this.callStackCalle = [];
+        this.callStackId = 0;
     }
 
     exitStart(ctx) {
@@ -40,6 +42,12 @@ export default class Listener extends BScriptListener {
         }
 
         this.currentScopeVariables = this.variables.get(this.scope);
+    }
+
+    enterDefine_function() {
+        const id = this.callStackId++;
+        this.callStackCalle.push(id);
+        this.callStack.set(id, []);
     }
 
     exitDefine_function(ctx) {
@@ -63,26 +71,26 @@ export default class Listener extends BScriptListener {
 
         this.generator.declareFunction(ID, config, args);
 
-        this.callStack.forEach(({ type, ctx }) => {
+        const stack = this.callStackCalle.pop();
+
+        this.callStack.get(stack).forEach(({ type, ctx }) => {
             switch(type) {
             case actionTypes.DEFINE:
-                this.exitDefine(ctx, true);
+                this.exitDefine(ctx);
                 break;
             case actionTypes.OUT:
-                this.exitOut(ctx, true);
+                this.exitOut(ctx);
                 break;
             case actionTypes.IN:
-                this.exitInput(ctx, true);
+                this.exitInput(ctx);
                 break;
             case actionTypes.SET:
-                this.exitSet(ctx, true);
+                this.exitSet(ctx);
                 break;
             default:
                 break;
             }
         });
-
-        this.callStack = [];
 
         this.generator.setRetVal(this.convertExpresion(ctx.expr()), this.scope);
 
@@ -121,13 +129,11 @@ export default class Listener extends BScriptListener {
         }
     }
 
-    exitDefine(ctx, pass) {
+    exitDefine(ctx) {
         if (
-            !ctx.parentCtx.parentCtx.definitions
-            && !ctx.parentCtx.parentCtx.parentCtx.definitions
-            && !pass
+            this.callStackCalle.length
         ) {
-            this.callStack.push({
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
                 type: actionTypes.DEFINE,
                 ctx
             })
@@ -232,13 +238,11 @@ export default class Listener extends BScriptListener {
         };
     }
 
-    exitInput(ctx, pass) {
+    exitInput(ctx) {
         if (
-            !ctx.parentCtx.parentCtx.definitions
-            && !ctx.parentCtx.parentCtx.parentCtx.definitions
-            && !pass
+            this.callStackCalle.length
         ) {
-            this.callStack.push({
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
                 type: actionTypes.IN,
                 ctx
             })
@@ -274,13 +278,11 @@ export default class Listener extends BScriptListener {
         }
     }
 
-    exitSet(ctx, pass) {
+    exitSet(ctx) {
         if (
-            !ctx.parentCtx.parentCtx.definitions
-            && !ctx.parentCtx.parentCtx.parentCtx.definitions
-            && !pass
+            this.callStackCalle.length
         ) {
-            this.callStack.push({
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
                 type: actionTypes.SET,
                 ctx
             })
@@ -331,13 +333,11 @@ export default class Listener extends BScriptListener {
         }
     }
 
-    exitOut(ctx, pass) {
+    exitOut(ctx) {
         if (
-            !ctx.parentCtx.parentCtx.definitions
-            && !ctx.parentCtx.parentCtx.parentCtx.definitions
-            && !pass
+            this.callStackCalle.length
         ) {
-            this.callStack.push({
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
                 type: actionTypes.OUT,
                 ctx
             })
