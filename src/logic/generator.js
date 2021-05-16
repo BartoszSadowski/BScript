@@ -131,7 +131,7 @@ export default class Generator {
             this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`;
         } else {
             const funct = this.functions.get(scope);
-            const functText = funct.entryText;
+            const functText = funct.bodyText;
 
             conv = `%conv${funct.calls++}`;
             functText.push(`${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`);
@@ -154,7 +154,7 @@ export default class Generator {
             this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`
         } else {
             const funct = this.functions.get(scope);
-            const functText = funct.entryText;
+            const functText = funct.bodyText;
 
             reg = val.isPtr ? val.value : `%${funct.reg++}`;
             functText.push(val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}${val.config.isArg ? '.addr' : ''}\n`);
@@ -187,7 +187,7 @@ export default class Generator {
             this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
         } else {
             const funct = this.functions.get(scope);
-            const functText = funct.entryText;
+            const functText = funct.bodyText;
 
             value = `%math${funct.calls++}`;
             functText.push(`${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`);
@@ -228,7 +228,7 @@ export default class Generator {
             this.mainText += `%call${this.calls++} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`;
         } else {
             const funct = this.functions.get(scope);
-            const functText = funct.entryText;
+            const functText = funct.bodyText;
 
             functText.push(`%call${funct.calls++} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* ${stringInputMap[type]}, i32 0, i32 0), ${typeMap[type]}* ${ptr})\n`);
         }
@@ -245,7 +245,7 @@ export default class Generator {
                 this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`;
             } else {
                 const funct = this.functions.get(scope);
-                const functText = funct.entryText;
+                const functText = funct.bodyText;
 
                 arrayidx = `%arrayidx${funct.calls++}`;
                 functText.push(`${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`);
@@ -256,12 +256,19 @@ export default class Generator {
         return entryPtr;
     }
 
-    set(id, val) {
-        const value = this.castType(val, id.config.type);
+    set(id, val, scope) {
+        const value = this.castType(val, id.config.type, scope);
 
-        const entryPtr = this.getArrayPtr(id);
+        const entryPtr = this.getArrayPtr(id, scope);
 
-        this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
+        if (scope === scopeTypes.GLOBAL) {
+            this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
+        } else {
+            const functText = this.functions.get(scope).bodyText;
+
+            functText.push(`store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`)
+        }
+
     }
 
     out(val, scope) {
@@ -275,7 +282,7 @@ export default class Generator {
             this.calls++;
         } else {
             const funct = this.functions.get(scope);
-            const functText = funct.entryText;
+            const functText = funct.bodyText;
 
             const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${funct.calls++}`; 
             functText.push(loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float ${loaded.value} to double\n`);

@@ -78,10 +78,15 @@ export default class Listener extends BScriptListener {
             case actionTypes.IN:
                 this.exitInput(ctx, true);
                 break;
+            case actionTypes.SET:
+                this.exitSet(ctx, true);
+                break;
             default:
                 break;
             }
         });
+
+        this.callStack = [];
 
         this.changeScope(scopeTypes.MAIN);
     }
@@ -267,7 +272,19 @@ export default class Listener extends BScriptListener {
         }
     }
 
-    exitSet(ctx) {
+    exitSet(ctx, pass) {
+        if (
+            !ctx.parentCtx.parentCtx.definitions
+            && !ctx.parentCtx.parentCtx.parentCtx.definitions
+            && !pass
+        ) {
+            this.callStack.push({
+                type: actionTypes.SET,
+                ctx
+            })
+            return;
+        }
+
         const {
             ID,
             idx
@@ -283,7 +300,7 @@ export default class Listener extends BScriptListener {
             this.generator.set({
                 value: `${varConfig.scope === scopeTypes.GLOBAL ? '@' : '%'}${id}`,
                 config: { ...varConfig, idx }
-            }, value);
+            }, value, this.scope);
         }
     }
 

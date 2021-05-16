@@ -4,6 +4,13 @@
 funkcja (C) z [(C) y, (C) w]
     [(R)] <2> q
     wypisz y * w + 1
+    [(R)] <2> xyz
     wczytaj q[0]
+    q[1] = q[0]
 zwraca y[1]
+
+funkcja (C) xz []
+    (C) q
+    wypisz q
+zwraca 0
 
