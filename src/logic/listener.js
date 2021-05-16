@@ -184,6 +184,57 @@ export default class Listener extends BScriptListener {
         }
     }
 
+    enterLoop() {
+        const id = this.callStackId++;
+        this.callStackCalle.push(id);
+        this.callStack.set(id, []);
+    }
+
+    exitLoop(ctx, callStack) {
+        const stack = callStack || this.callStackCalle.pop();
+
+        if (this.callStackCalle.length) {
+            this.callStack.get(this.callStackCalle[this.callStackCalle.length-1]).push({
+                type: actionTypes.WHILE,
+                ctx,
+                stack
+            })
+            return;
+        } else {
+            const whileLabel = this.generator.preWhile(this.scope);
+
+            const conditionRes = this.convertCondtion(ctx.cond());
+
+            const ending = this.generator.beginWhile(conditionRes, this.scope);
+
+            this.callStack.get(stack).forEach(({ type, ctx, stack }) => {
+                switch(type) {
+                case actionTypes.DEFINE:
+                    this.exitDefine(ctx);
+                    break;
+                case actionTypes.OUT:
+                    this.exitOut(ctx);
+                    break;
+                case actionTypes.IN:
+                    this.exitInput(ctx);
+                    break;
+                case actionTypes.SET:
+                    this.exitSet(ctx);
+                    break;
+                case actionTypes.IF:
+                    this.exitCondition(ctx, stack);
+                    break;
+                case actionTypes.WHILE:
+                    this.exitWhile(ctx, stack);
+                default:
+                    break;
+                }
+            });
+
+            this.generator.endWhile(whileLabel, ending, this.scope);
+        }
+    }
+
     exitDefine(ctx) {
         if (
             this.callStackCalle.length

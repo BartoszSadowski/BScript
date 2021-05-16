@@ -392,6 +392,62 @@ export default class Generator {
         }
     }
 
+    preWhile(scope) {
+        let label;
+
+        if (scope === scopeTypes.MAIN) {
+            label = `while.cond.${this.calls++}`;
+            
+            this.mainText += `br label %${label}\n`;
+            this.mainText += `${label}:\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            label1 = `while.cond.${funct.calls++}`;
+
+            functText.push(`br label %${label}\n`);
+            functText.push(`${label}:\n`);
+        }
+
+        return label;
+    }
+
+    beginWhile(condition, scope) {
+        let label1;
+        let label2;
+        if (scope === scopeTypes.MAIN) {
+            label1 = `while.body.${this.calls++}`;
+            label2 = `while.end.${this.calls++}`;
+            this.mainText += `br i1 ${condition.value}, label %${label1}, label %${label2}\n`;
+            this.mainText += `${label1}:\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            label1 = `while.body.${funct.calls++}`;
+            label2 = `while.end.${funct.calls++}`;
+
+            functText.push(`br i1 ${condition.value}, label ${label1}, label${label2}\n`);
+            functText.push(`${label1}:\n`);
+        }
+
+        return label2;
+    }
+
+    endWhile(condition, ending, scope) {
+        if (scope === scopeTypes.MAIN) {
+            this.mainText += `br label %${condition}\n`;
+            this.mainText += `${ending}:\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.bodyText;
+
+            functText.push(`br label %${condition}\n`);
+            functText.push(`${ending}:\n`);
+        }
+    }
+
     generate() {
         let text = '';
         text += this.globalVariables;
