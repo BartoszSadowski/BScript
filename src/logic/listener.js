@@ -88,6 +88,8 @@ export default class Listener extends BScriptListener {
 
         this.callStack = [];
 
+        this.generator.setRetVal(this.convertExpresion(ctx.expr()), this.scope);
+
         this.changeScope(scopeTypes.MAIN);
     }
     

@@ -6,11 +6,11 @@ funkcja (C) z [(C) y, (C) w]
     wypisz y * w + 1
     [(R)] <2> xyz
     wczytaj q[0]
-    q[1] = q[0]
-zwraca y[1]
+    q[1] = q[0] + 1
+zwraca y
 
 funkcja (C) xz []
     (C) q
     wypisz q
-zwraca 0
+zwraca q
 

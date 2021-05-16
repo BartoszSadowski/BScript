@@ -59,6 +59,7 @@ export default class Generator {
         this.functions.set(id, {
             reg: 0,
             calls: 0,
+            type,
             entryText: [
                 `define ${typeMap[type]} @${id}(`,
                 ...args.map(arg => `${typeMap[arg.config.type]} %${arg.id}`).join(', '),
@@ -69,10 +70,17 @@ export default class Generator {
             ],
             bodyText: [],
             closingText: [
-                'ret i32 0\n',
                 '}\n'
             ]
         });
+    }
+
+    setRetVal(val, scope) {
+        const funct = this.functions.get(scope);
+
+        const { value } = this.castType(val, funct.type, scope);
+
+        funct.bodyText.push(`ret ${typeMap[funct.type]} ${value}\n`);
     }
 
     typeToWeight(type) {
@@ -266,7 +274,7 @@ export default class Generator {
         } else {
             const functText = this.functions.get(scope).bodyText;
 
-            functText.push(`store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`)
+            functText.push(`store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`);
         }
 
     }

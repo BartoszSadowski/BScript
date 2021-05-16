@@ -17,7 +17,7 @@ stat: define
     | input 
     | set ;
 
-define_function : 'funkcja' type=(INT_DEF | FLOAT_DEF) ID '[' (function_args)* ']' NEWLINE main 'zwraca' value ;
+define_function : 'funkcja' type=(INT_DEF | FLOAT_DEF) ID '[' (function_args)* ']' NEWLINE main 'zwraca' expr ;
 
 function_args : (type=(INT_DEF | FLOAT_DEF) ID) (',' function_args)*
                 | type=(INT_DEF | FLOAT_DEF) ID ;
