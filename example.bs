@@ -1,9 +1,35 @@
-[(C)] <3> x
-[(R)] <2> y
+(C) x
 
-wczytaj x[2]
-wczytaj y[1]
+funkcja (C) wieksza [(C) x, (C) y]
+    (C) zwrot
 
-wypisz  x[2] + y[1] * 2
+    zwrot = x
 
-wypisz (x[2] + y[1]) * 2
+    jezeli (x < y)
+        zwrot = y
+    koniec
+zwraca zwrot
+
+funkcja (R) kolejne [(C) dlugosc]
+    (C) i
+
+    i = 1
+
+    dopoki (i <= dlugosc)
+        wypisz i
+        i = i + 1
+    koniec
+zwraca i+0.5
+
+(C) y
+
+wczytaj x
+wczytaj y
+
+wypisz wieksza(x, y)
+
+(C) z
+
+z = x + y
+
+wypisz kolejne(z)
