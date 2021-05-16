@@ -3,13 +3,6 @@
 
 funkcja (C) z [(C) y, (C) w]
     (R) q
+    wypisz x[1] + 1
 zwraca y[1]
 
-wczytaj x[2]
-wczytaj y[1]
-
-(R) a
-
-wypisz  x[2] + y[1] * 2
-
-wypisz (x[2] + y[1]) * 2

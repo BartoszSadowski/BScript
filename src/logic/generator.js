@@ -96,9 +96,9 @@ export default class Generator {
         return weight1 < weight2 ? typeWeights[weight1] : typeWeights[weight2];
     }
 
-    castType(val, type) {
+    castType(val, type, scope) {
         if (val.type === type && val.isVar) {
-            return this.loadValue(val);
+            return this.loadValue(val, scope);
         }
         
         if (val.type === type) {
@@ -123,9 +123,20 @@ export default class Generator {
             }
         }
 
-        const loaded = this.loadValue(val);
-        const conv = `%conv${this.calls++}`;
-        this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`
+        const loaded = this.loadValue(val, scope);
+        let conv;
+
+        if (scope === scopeTypes.MAIN) {
+            conv = `%conv${this.calls++}`;
+            this.mainText += `${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.entryText;
+
+            conv = `%conv${funct.calls++}`;
+            functText.push(`${conv} = ${this.typeConverter(val.type, type)} ${typeMap[val.type]} ${loaded.value} to ${typeMap[type]}\n`);
+        }
+
 
         return {
             isPtr: true,
@@ -134,11 +145,20 @@ export default class Generator {
         }
     }
 
-    loadValue(val) {
-        const value = this.getArrayPtr(val);
+    loadValue(val, scope) {
+        let reg;
+        const value = this.getArrayPtr(val, scope);
 
-        const reg = val.isPtr ? val.value : `%${this.reg++}`;
-        this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`
+        if (scope === scopeTypes.MAIN) {
+            reg = val.isPtr ? val.value : `%${this.reg++}`;
+            this.mainText += val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.entryText;
+
+            reg = val.isPtr ? val.value : `%${funct.reg++}`;
+            functText.push(val.isPtr ? '' : `${reg} = load ${typeMap[val.type]}, ${typeMap[val.type]}* ${value}\n`);
+        }
 
         return {
             ...val,
@@ -147,21 +167,31 @@ export default class Generator {
         }
     }
 
-    toCommonType(val1, val2) {
+    toCommonType(val1, val2, scope) {
         const commonType = this.commonType(val1.type, val2.type);
 
         return [
-            this.castType(val1, commonType),
-            this.castType(val2, commonType)
+            this.castType(val1, commonType, scope),
+            this.castType(val2, commonType, scope)
         ];
     }
 
-    mathOperation(v1, v2, methodMap) {
-        const [val1, val2] = this.toCommonType(v1, v2);
+    mathOperation(v1, v2, methodMap, scope) {
+        const [val1, val2] = this.toCommonType(v1, v2, scope);
         const type = val1.type;
 
-        const value = `%math${this.calls++}`;
-        this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
+        let value;
+
+        if (scope === scopeTypes.GLOBAL) {
+            value = `%math${this.calls++}`;
+            this.mainText += `${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.entryText;
+
+            value = `%math${funct.calls++}`;
+            functText.push(`${value} = ${methodMap[type]} ${typeMap[type]} ${val1.value}, ${val2.value}\n`);
+        }
 
         return {
             isPtr: true,
@@ -175,20 +205,20 @@ export default class Generator {
         };
     }
 
-    addValues(val1, val2) {
-        return this.mathOperation(val1, val2, addMethodMap);
+    addValues(val1, val2, scope) {
+        return this.mathOperation(val1, val2, addMethodMap, scope);
     }
 
-    subValues(val1, val2) {
-        return this.mathOperation(val1, val2, subMethodMap);
+    subValues(val1, val2, scope) {
+        return this.mathOperation(val1, val2, subMethodMap, scope);
     }
 
-    mulValues(val1, val2) {
-        return this.mathOperation(val1, val2, mulMethodMap);
+    mulValues(val1, val2, scope) {
+        return this.mathOperation(val1, val2, mulMethodMap, scope);
     }
 
-    divValues(val1, val2) {
-        return this.mathOperation(val1, val2, divMethodMap);
+    divValues(val1, val2, scope) {
+        return this.mathOperation(val1, val2, divMethodMap, scope);
     }
 
     scanf(id, type) {
@@ -198,12 +228,21 @@ export default class Generator {
         this.calls++;
     }
 
-    getArrayPtr(id) {
+    getArrayPtr(id, scope) {
         const entryPtr = id.value;
 
         if (id.config.isArray) {
-            const arrayidx = `%arrayidx${this.calls++}`;
-            this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`
+            let arrayidx;
+            if (scope === scopeTypes.GLOBAL) {
+                arrayidx = `%arrayidx${this.calls++}`;
+                this.mainText += `${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`;
+            } else {
+                const funct = this.functions.get(scope);
+                const functText = funct.entryText;
+
+                arrayidx = `%arrayidx${funct.calls++}`;
+                functText.push(`${arrayidx} = getelementptr inbounds [${id.config.length} x ${typeMap[id.config.type]}], [${id.config.length} x ${typeMap[id.config.type]}]* ${entryPtr}, i32 0, i64 ${id.config.idx}\n`);
+            }
             return arrayidx;
         }
 
@@ -218,14 +257,27 @@ export default class Generator {
         this.mainText += `store ${typeMap[id.config.type]} ${value.value}, ${typeMap[id.config.type]}* ${entryPtr}\n`;
     }
 
-    out(val) {
-        const loaded = this.loadValue(val);
+    out(val, scope) {
+        const loaded = this.loadValue(val, scope);
+        
+        if (scope === scopeTypes.MAIN) {
+            const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${this.calls++}`; 
+            this.mainText += loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float ${loaded.value} to double\n`;
+            const type = loaded.type !== valueTypes.FLOAT ? loaded.type : valueTypes.DOUBLE; 
+            this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`;
+            this.calls++;
+        } else {
+            const funct = this.functions.get(scope);
+            const functText = funct.entryText;
 
-        const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${this.calls++}`; 
-        this.mainText += loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float ${loaded.value} to double\n`;
-        const type = loaded.type !== valueTypes.FLOAT ? loaded.type : valueTypes.DOUBLE; 
-        this.mainText += `%call${this.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`;
-        this.calls++;
+            const call = loaded.type !== valueTypes.FLOAT ? loaded.value : `%conv${funct.calls++}`; 
+            functText.push(loaded.type !== valueTypes.FLOAT ? '' : `${call} = fpext float ${loaded.value} to double\n`);
+            const type = loaded.type !== valueTypes.FLOAT ? loaded.type : valueTypes.DOUBLE; 
+            functText.push(`%call${funct.calls} = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* ${stringOutputMap[type]}, i32 0, i32 0), ${typeMap[type]} ${call})\n`);
+            funct.calls++;
+        }
+
+
     }
 
     generate() {

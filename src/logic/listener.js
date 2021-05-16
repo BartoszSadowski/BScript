@@ -67,12 +67,13 @@ export default class Listener extends BScriptListener {
 
         this.generator.declareFunction(ID, config, args);
 
-        console.log(this.callStack[0].ctx.getText());
         this.callStack.forEach(({ type, ctx }) => {
             switch(type) {
             case actionTypes.DEFINE:
                 this.exitDefine(ctx, true);
                 break;
+            case actionTypes.OUT:
+                this.exitOut(ctx, true);
             default:
                 break;
             }
@@ -292,7 +293,19 @@ export default class Listener extends BScriptListener {
 
     }
 
-    exitOut(ctx) {
+    exitOut(ctx, pass) {
+        if (
+            !ctx.parentCtx.parentCtx.definitions
+            && !ctx.parentCtx.parentCtx.parentCtx.definitions
+            && !pass
+        ) {
+            this.callStack.push({
+                type: actionTypes.OUT,
+                ctx
+            })
+            return;
+        }
+
         const value = this.convertExpresion(ctx.expr());
 
         const { type } = value;
@@ -308,7 +321,7 @@ export default class Listener extends BScriptListener {
             break;
         }
 
-        this.generator.out(value);
+        this.generator.out(value, this.scope);
     }
 
     ensureHeader(type) {
@@ -325,19 +338,19 @@ export default class Listener extends BScriptListener {
             const val2 = this.convertExpresion(statement2);
             
             if (node.ADD && node.ADD()) {
-                return this.generator.addValues(val1, val2);
+                return this.generator.addValues(val1, val2, this.scope);
             }
     
             if (node.SUB && node.SUB()) {
-                return this.generator.subValues(val1, val2);
+                return this.generator.subValues(val1, val2, this.scope);
             }
     
             if (node.MUL && node.MUL()) {
-                return this.generator.mulValues(val1, val2);
+                return this.generator.mulValues(val1, val2, this.scope);
             }
     
             if (node.DIV && node.DIV()) {
-                return this.generator.divValues(val1, val2);
+                return this.generator.divValues(val1, val2, this.scope);
             }
         }
 
